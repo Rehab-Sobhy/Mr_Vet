@@ -43,6 +43,7 @@ exports.createCourse = async (req, res) => {
   try {
     const { title, description, price, category } = req.body;
 
+    // التحقق من الحقول المطلوبة
     if (!title || !description || !price || !category) {
       return res.status(400).json({ error: '❌ يرجى ملء جميع الحقول المطلوبة: title, description, price, category' });
     }

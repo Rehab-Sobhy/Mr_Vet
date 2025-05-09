@@ -4,9 +4,9 @@ const { createNotification, getUserNotifications } = require('../controllers/not
 const authMiddleware = require('../middleware/authMiddleware');
 
 // ✅ إنشاء إشعار جديد
-router.post('/create', authMiddleware, createNotification);
+router.post('/', authMiddleware, createNotification);
 
 // ✅ جلب الإشعارات الخاصة بمستخدم معين
-router.get('/user/:userId', authMiddleware, getUserNotifications);
+router.get('/:userId', authMiddleware, getUserNotifications);
 
 module.exports = router;

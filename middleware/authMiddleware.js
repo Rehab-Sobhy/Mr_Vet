@@ -24,6 +24,11 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: '❌ Invalid Token: التوكن غير نشط!' });
     }
 
+    // التحقق من صلاحية التوكن بناءً على الدور (اختياري)
+    if (user.role === 'instructor' && user.activeToken !== token) {
+      return res.status(401).json({ message: '❌ Invalid Token: التوكن الخاص بالمدرس غير نشط!' });
+    }
+
     req.user = user; // إضافة بيانات المستخدم إلى الطلب
     next();
   } catch (err) {

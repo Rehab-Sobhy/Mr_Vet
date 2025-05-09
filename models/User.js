@@ -10,7 +10,12 @@ const userSchema = new mongoose.Schema({
     default: 'student', // الدور الافتراضي هو طالب
   },
   profileImage: { type: String }, // مسار صورة الملف الشخصي
-  collegeId: { type: String, required: true }, // مسار صورة الكارنيه (مطلوب)
+  collegeId: {
+    type: String,
+    required: function () {
+      return this.role === 'student'; // مطلوب فقط إذا كان الدور هو طالب
+    },
+  },
   activeToken: { type: String }, // تخزين التوكن النشط لمنع تسجيل الدخول من أكثر من جهاز
 }, { timestamps: true });
 

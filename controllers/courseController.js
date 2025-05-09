@@ -1,4 +1,5 @@
 const Course = require('../models/Course');
+const User = require('../models/User');
 
 // ✅ جلب كل الكورسات
 exports.getAllCourses = async (req, res) => {
@@ -114,5 +115,34 @@ exports.deleteCourse = async (req, res) => {
   } catch (err) {
     console.error("❌ Error deleting course:", err);
     res.status(500).json({ error: `❌ حدث خطأ أثناء حذف الكورس: ${err.message}` });
+  }
+};
+
+// ✅ التحقق من اشتراك المستخدم في الكورس
+exports.checkEnrollment = async (req, res) => {
+  try {
+    const userId = req.user._id; // ID المستخدم من التوكن
+    const courseId = req.params.id; // ID الكورس من الرابط
+
+    // التحقق مما إذا كان المستخدم مشتركًا في الكورس
+    const user = await User.findById(userId);
+    const isEnrolled = user.enrolledCourses.includes(courseId);
+
+    if (isEnrolled) {
+      // المستخدم مشترك بالفعل
+      const course = await Course.findById(courseId);
+      return res.status(200).json({
+        message: '✅ أنت مشترك بالفعل في هذا الكورس!',
+        course,
+      });
+    } else {
+      // المستخدم غير مشترك
+      return res.status(403).json({
+        message: '❌ يجب الاشتراك في الكورس للوصول إلى المحتوى.',
+      });
+    }
+  } catch (err) {
+    console.error('❌ Error checking enrollment:', err);
+    res.status(500).json({ error: '❌ حدث خطأ أثناء التحقق من الاشتراك.' });
   }
 };

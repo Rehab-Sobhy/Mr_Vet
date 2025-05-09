@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
     },
   },
   activeToken: { type: String }, // تخزين التوكن النشط لمنع تسجيل الدخول من أكثر من جهاز
+  enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }], // قائمة الكورسات المشترك فيها
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

@@ -20,6 +20,13 @@ router.get(
   courseController.getCourseById
 );
 
+// ✅ التحقق من اشتراك المستخدم في الكورس
+router.get(
+  '/:id/check-enrollment',
+  authMiddleware,
+  courseController.checkEnrollment
+);
+
 // ✅ جلب كل الكورسات
 router.get('/', courseController.getAllCourses);
 

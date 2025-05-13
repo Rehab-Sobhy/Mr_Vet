@@ -30,7 +30,7 @@ router.get(
 // ✅ جلب كل الكورسات
 router.get('/', courseController.getAllCourses);
 
-// ✅ إنشاء كورس جديد (للـ Instructors و Admin فقط) مع رفع صورة وفيديوهات
+// ✅ إنشاء كورس جديد
 router.post(
   '/create',
   authMiddleware,
@@ -40,26 +40,6 @@ router.post(
     { name: 'videos' }, // رفع فيديوهات الكورس بدون حد أقصى
   ]),
   courseController.createCourse
-);
-
-// ✅ تعديل كورس خاص بـ Instructor معين مع رفع صورة وفيديوهات جديدة
-router.put(
-  '/:id',
-  authMiddleware,
-  roleMiddleware(['instructor']),
-  upload.fields([
-    { name: 'courseImage', maxCount: 1 }, // رفع صورة جديدة للكورس
-    { name: 'videos' }, // رفع فيديوهات جديدة للكورس بدون حد أقصى
-  ]),
-  courseController.updateInstructorCourse
-);
-
-// ✅ حذف كورس (للـ Instructors فقط)
-router.delete(
-  '/:id',
-  authMiddleware,
-  roleMiddleware(['instructor']),
-  courseController.deleteCourse
 );
 
 module.exports = router;

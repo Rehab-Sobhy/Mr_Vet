@@ -44,18 +44,13 @@ exports.createCourse = async (req, res) => {
   try {
     const { title, description, price, category } = req.body;
 
-    // التحقق من الحقول المطلوبة
     if (!title || !description || !price || !category) {
       return res.status(400).json({ error: '❌ يرجى ملء جميع الحقول المطلوبة: title, description, price, category' });
     }
 
-    // التحقق من رفع صورة الكورس
     const courseImage = req.files['courseImage'] ? req.files['courseImage'][0].path : null;
-
-    // التحقق من رفع الفيديوهات
     const videos = req.files['videos'] ? req.files['videos'].map(file => file.path) : [];
 
-    // إنشاء الكورس
     const course = new Course({
       title,
       description,
@@ -63,7 +58,7 @@ exports.createCourse = async (req, res) => {
       category,
       courseImage,
       videos,
-      instructor: req.user._id, // إضافة المدرس من التوكن
+      instructor: req.user._id,
     });
 
     await course.save();
@@ -74,69 +69,22 @@ exports.createCourse = async (req, res) => {
   }
 };
 
-// ✅ تعديل كورس خاص بـ Instructor معين
-exports.updateInstructorCourse = async (req, res) => {
-  try {
-    const instructorId = req.user._id; // جلب ID المدرس من التوكن
-    const courseId = req.params.id;
-
-    // التحقق من أن الكورس يخص المدرس
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
-    if (!course) {
-      return res.status(403).json({ error: '❌ لا يمكنك تعديل هذا الكورس لأنه لا يخصك' });
-    }
-
-    const updates = { ...req.body };
-    if (req.files['courseImage']) {
-      updates.courseImage = req.files['courseImage'][0].path;
-    }
-    if (req.files['videos']) {
-      updates.videos = req.files['videos'].map(file => file.path);
-    }
-
-    const updatedCourse = await Course.findByIdAndUpdate(courseId, updates, { new: true, runValidators: true });
-    res.status(200).json({ message: '✅ تم تعديل الكورس بنجاح!', updatedCourse });
-  } catch (err) {
-    console.error("❌ Error updating course:", err);
-    res.status(500).json({ error: `❌ حدث خطأ أثناء تعديل الكورس: ${err.message}` });
-  }
-};
-
-// ✅ حذف كورس
-exports.deleteCourse = async (req, res) => {
-  try {
-    const course = await Course.findById(req.params.id);
-    if (!course) {
-      return res.status(404).json({ error: '❌ الكورس غير موجود' });
-    }
-
-    await Course.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: '✅ تم حذف الكورس بنجاح' });
-  } catch (err) {
-    console.error("❌ Error deleting course:", err);
-    res.status(500).json({ error: `❌ حدث خطأ أثناء حذف الكورس: ${err.message}` });
-  }
-};
-
 // ✅ التحقق من اشتراك المستخدم في الكورس
 exports.checkEnrollment = async (req, res) => {
   try {
-    const userId = req.user._id; // ID المستخدم من التوكن
-    const courseId = req.params.id; // ID الكورس من الرابط
+    const userId = req.user._id;
+    const courseId = req.params.id;
 
-    // التحقق مما إذا كان المستخدم مشتركًا في الكورس
     const user = await User.findById(userId);
     const isEnrolled = user.enrolledCourses.includes(courseId);
 
     if (isEnrolled) {
-      // المستخدم مشترك بالفعل
       const course = await Course.findById(courseId);
       return res.status(200).json({
         message: '✅ أنت مشترك بالفعل في هذا الكورس!',
         course,
       });
     } else {
-      // المستخدم غير مشترك
       return res.status(403).json({
         message: '❌ يجب الاشتراك في الكورس للوصول إلى المحتوى.',
       });

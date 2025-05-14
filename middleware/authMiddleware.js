@@ -10,6 +10,7 @@ const authMiddleware = async (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
+    // فقط تحقق من صحة التوكن من JWT، بدون أي تحقق من activeToken أو انتهاء صلاحية مخصص
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId).select('-password');
     if (!user) {

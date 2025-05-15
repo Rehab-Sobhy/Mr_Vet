@@ -1,5 +1,5 @@
 const Video = require('../models/Video');
-
+const Course = require('../models/Course'); // استيراد نموذج الكورس
 // ✅ إضافة فيديو جديد مربوط بكورس
 const addVideo = async (req, res) => {
   try {
@@ -15,6 +15,16 @@ const addVideo = async (req, res) => {
       return res.status(400).json({ message: '❌ لازم ترفع فيديو!' });
     }
 
+    // ✅ التحقق من نوع الملف
+    if (!req.file.mimetype.startsWith('video/')) {
+      return res.status(400).json({ message: '❌ لازم ترفع ملف فيديو فقط!' });
+    }
+
+    // ✅ التحقق من وجود الكورس
+    const course = await Course.findById(courseId);
+    if (!course)
+      return res.status(404).json({ message: '❌ الكورس غير موجود!' });
+
     // إنشاء الفيديو
     const video = new Video({
       title,
@@ -24,7 +34,7 @@ const addVideo = async (req, res) => {
 
     await video.save();
     res.status(201).json({ message: '✅ تم إضافة الفيديو بنجاح!', video });
-  } catch (error) {
+  } catch (error) { // ✅ معالجة أخطاء حفظ الملف وقاعدة البيانات بشكل منفصل
     console.error('❌ Error adding video:', error);
     res.status(400).json({ message: '❌ فشل في إضافة الفيديو', error: error.message });
   }

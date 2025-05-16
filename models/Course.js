@@ -6,7 +6,7 @@ const courseSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   category: { type: String, required: true },
   courseImage: { type: String }, // صورة الكورس
-  videos: [{ type: String }], // مسارات الفيديوهات المرفوعة
+  videos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Video' }], // ربط الفيديوهات بجدول الفيديوهات
   instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // المدرس الذي أنشأ الكورس
 }, { timestamps: true });
 

@@ -1,10 +1,11 @@
 const Course = require('../models/Course');
 const User = require('../models/User');
+const Video = require('../models/Video');
 
 // ✅ جلب كل الكورسات
 exports.getAllCourses = async (req, res) => {
   try {
-    const courses = await Course.find();
+    const courses = await Course.find().populate('videos');
     res.status(200).json(courses);
   } catch (err) {
     console.error("❌ Error fetching courses:", err);
@@ -15,7 +16,7 @@ exports.getAllCourses = async (req, res) => {
 // ✅ جلب كورس معين بالـ ID
 exports.getCourseById = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findById(req.params.id).populate('videos');
     if (!course) {
       return res.status(404).json({ error: '❌ الكورس غير موجود' });
     }
@@ -30,7 +31,7 @@ exports.getCourseById = async (req, res) => {
 exports.getInstructorCourses = async (req, res) => {
   try {
     const instructorId = req.user._id; // جلب ID المدرس من التوكن
-    const courses = await Course.find({ instructor: instructorId });
+    const courses = await Course.find({ instructor: instructorId }).populate('videos');
 
     res.status(200).json({ message: '✅ تم جلب الكورسات بنجاح', courses });
   } catch (err) {
@@ -49,7 +50,19 @@ exports.createCourse = async (req, res) => {
     }
 
     const courseImage = req.files['courseImage'] ? req.files['courseImage'][0].path : null;
-    const videos = req.files['videos'] ? req.files['videos'].map(file => file.path) : [];
+    const videoIds = [];
+
+    if (req.files['videos']) {
+      for (const file of req.files['videos']) {
+        const video = new Video({
+          title: file.originalname,
+          videoPath: file.path,
+          courseId: null // سيتم تحديثه بعد إنشاء الكورس
+        });
+        await video.save();
+        videoIds.push(video._id);
+      }
+    }
 
     const course = new Course({
       title,
@@ -57,11 +70,15 @@ exports.createCourse = async (req, res) => {
       price,
       category,
       courseImage,
-      videos,
+      videos: videoIds,
       instructor: req.user._id,
     });
 
     await course.save();
+
+    // تحديث courseId في الفيديوهات
+    await Video.updateMany({ _id: { $in: videoIds } }, { courseId: course._id });
+
     res.status(201).json({ message: '✅ تم إنشاء الكورس بنجاح!', course });
   } catch (err) {
     console.error("❌ Error creating course:", err);
@@ -79,7 +96,7 @@ exports.checkEnrollment = async (req, res) => {
     const isEnrolled = user.enrolledCourses.includes(courseId);
 
     if (isEnrolled) {
-      const course = await Course.findById(courseId);
+      const course = await Course.findById(courseId).populate('videos');
       return res.status(200).json({
         message: '✅ أنت مشترك بالفعل في هذا الكورس!',
         course,

@@ -4,7 +4,10 @@ const fs = require('fs');
 
 const ensureFolderExists = (folder) => {
   if (!fs.existsSync(folder)) {
+    console.log(`Creating folder: ${folder}`); // Logging
     fs.mkdirSync(folder, { recursive: true });
+  } else {
+    console.log(`Folder exists: ${folder}`); // Logging
   }
 };
 
@@ -22,10 +25,12 @@ const storage = multer.diskStorage({
     }
 
     ensureFolderExists(folder);
+    console.log(`Saving file to: ${folder}`); // Logging
     cb(null, folder);
   },
   filename: (req, file, cb) => {
     const uniqueName = `${Date.now()}-${file.originalname}`;
+    console.log(`File name: ${uniqueName}`); // Logging
     cb(null, uniqueName);
   },
 });

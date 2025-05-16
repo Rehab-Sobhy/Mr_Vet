@@ -1,13 +1,18 @@
+const mongoose = require('mongoose');
 const Video = require('../models/Video');
-const Course = require('../models/Course'); // استيراد نموذج الكورس
+const Course = require('../models/Course');
+
 // ✅ إضافة فيديو جديد مربوط بكورس
 const addVideo = async (req, res) => {
   try {
-    const { title, courseId } = req.body;
+    console.log('Request Body:', req.body); // Logging عشان نشوف إيه اللي بيتبعت
+    console.log('Request File:', req.file);
 
-    // التحقق من البيانات
+    const { title, courseId, order, course } = req.body;
+
+    // التحقق من البيانات الأساسية
     if (!title || !courseId) {
-      return res.status(400).json({ message: '❌ كل الحقول مطلوبة!' });
+      return res.status(400).json({ message: '❌ كل الحقول الأساسية مطلوبة (العنوان، معرف الكورس)!' });
     }
 
     // التحقق من رفع الفيديو
@@ -20,21 +25,35 @@ const addVideo = async (req, res) => {
       return res.status(400).json({ message: '❌ لازم ترفع ملف فيديو فقط!' });
     }
 
+    // التحقق من صلاحية courseId
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: '❌ معرف الكورس غير صالح!' });
+    }
+
     // ✅ التحقق من وجود الكورس
-    const course = await Course.findById(courseId);
-    if (!course)
+    const courseDoc = await Course.findById(courseId);
+    if (!courseDoc) {
       return res.status(404).json({ message: '❌ الكورس غير موجود!' });
+    }
+
+    // ✅ التحقق من إن الـ instructor هو صاحب الكورس
+    if (courseDoc.instructor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: '❌ غير مصرح لك بإضافة فيديوهات لهذا الكورس!' });
+    }
 
     // إنشاء الفيديو
     const video = new Video({
       title,
-      videoPath: req.file.path, // مسار الفيديو المرفوع
+      videoPath: req.file.path,
       courseId,
+      order: order || 1, // قيمة افتراضية لو الحقل مش موجود
+      course: course || 'غير محدد', // قيمة افتراضية
+      instructorId: req.user._id, // إضافة معرف الـ instructor
     });
 
     await video.save();
     res.status(201).json({ message: '✅ تم إضافة الفيديو بنجاح!', video });
-  } catch (error) { // ✅ معالجة أخطاء حفظ الملف وقاعدة البيانات بشكل منفصل
+  } catch (error) {
     console.error('❌ Error adding video:', error);
     res.status(400).json({ message: '❌ فشل في إضافة الفيديو', error: error.message });
   }
@@ -48,6 +67,11 @@ const getVideosByCourse = async (req, res) => {
     // التحقق من وجود معرف الكورس
     if (!courseId) {
       return res.status(400).json({ message: '❌ معرف الكورس مطلوب!' });
+    }
+
+    // التحقق من صلاحية courseId
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: '❌ معرف الكورس غير صالح!' });
     }
 
     // جلب الفيديوهات المرتبطة بالكورس

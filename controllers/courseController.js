@@ -50,34 +50,36 @@ exports.createCourse = async (req, res) => {
     }
 
     const courseImage = req.files['courseImage'] ? req.files['courseImage'][0].path : null;
-    const videoIds = [];
 
-    if (req.files['videos']) {
-      for (const file of req.files['videos']) {
-        const video = new Video({
-          title: file.originalname,
-          videoPath: file.path,
-          courseId: null // سيتم تحديثه بعد إنشاء الكورس
-        });
-        await video.save();
-        videoIds.push(video._id);
-      }
-    }
-
+    // 1. أنشئ الكورس أولاً بدون فيديوهات
     const course = new Course({
       title,
       description,
       price,
       category,
       courseImage,
-      videos: videoIds,
+      videos: [],
       instructor: req.user._id,
     });
-
     await course.save();
 
-    // تحديث courseId في الفيديوهات
-    await Video.updateMany({ _id: { $in: videoIds } }, { courseId: course._id });
+    // 2. أنشئ الفيديوهات واربطها بالكورس
+    const videoIds = [];
+    if (req.files['videos']) {
+      for (const file of req.files['videos']) {
+        const video = new Video({
+          title: file.originalname,
+          videoPath: file.path,
+          courseId: course._id // هنا بنحط الـ id الصحيح
+        });
+        await video.save();
+        videoIds.push(video._id);
+      }
+    }
+
+    // 3. حدث الكورس وضيف الفيديوهات
+    course.videos = videoIds;
+    await course.save();
 
     res.status(201).json({ message: '✅ تم إنشاء الكورس بنجاح!', course });
   } catch (err) {

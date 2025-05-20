@@ -18,6 +18,8 @@ const userSchema = new mongoose.Schema({
   },
   activeToken: { type: String }, // تخزين التوكن النشط لمنع تسجيل الدخول من أكثر من جهاز
   enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }], // قائمة الكورسات المشترك فيها
+  resetPasswordToken: { type: String },      // لإعادة تعيين كلمة السر
+  resetPasswordExpire: { type: Date },       // تاريخ انتهاء صلاحية التوكن
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

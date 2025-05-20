@@ -1,15 +1,16 @@
-// controllers/authController.js
+/// controllers/authController.js
 
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const multer = require('multer');
 const path = require('path');
+const crypto = require("crypto"); // ✅ مضافة من الكود التاني
 
 // ✅ إنشاء توكن JWT
 const generateToken = (userId, role) => {
   return jwt.sign({ userId, role }, process.env.JWT_SECRET, {
-    expiresIn: "7d", // التوكن صالح لمدة 7 أيام
+    expiresIn: "30d", // التوكن صالح لمدة 7 أيام
   });
 };
 
@@ -119,5 +120,50 @@ exports.login = async (req, res) => {
   } catch (err) {
     console.error("❌ Error during login:", err);
     res.status(500).json({ msg: "❌ حصلت مشكلة أثناء تسجيل الدخول", error: err.message });
+  }
+};
+
+// ✅ نسيان كلمة السر
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: '❌ المستخدم غير موجود' });
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpire = Date.now() + 1000 * 60 * 15; // 15 دقيقة
+
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpire = resetTokenExpire;
+    await user.save();
+
+    // هنا يمكنك إرسال التوكن على الإيميل الحقيقي للمستخدم
+   //  const resetLink = `https://your-frontend-url.com/reset-password?token=${resetToken}`;
+    await sendEmail(user.email, 'Password Reset', `Use this link to reset your password: ${resetLink}`);
+
+    res.status(200).json({ message: '✅ تم إرسال رابط إعادة التعيين على الإيميل', resetToken });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء إرسال كود إعادة التعيين', error: err.message });
+  }
+};
+
+// ✅ إعادة تعيين كلمة السر
+exports.resetPassword = async (req, res) => {
+  try {
+    const { resetToken, newPassword } = req.body;
+    const user = await User.findOne({
+      resetPasswordToken: resetToken,
+      resetPasswordExpire: { $gt: Date.now() }
+    });
+    if (!user) return res.status(400).json({ message: '❌ التوكن غير صالح أو منتهي' });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json({ message: '✅ تم إعادة تعيين كلمة السر بنجاح' });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء إعادة تعيين كلمة السر', error: err.message });
   }
 };

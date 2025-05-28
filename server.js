@@ -43,6 +43,8 @@ const connectDB = async () => {
 
 // تنفيذ الاتصال بقاعدة البيانات
 connectDB();
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ✅ إعداد المسارات
 app.use('/api/users', userRoutes);

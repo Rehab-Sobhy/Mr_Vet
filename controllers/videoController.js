@@ -41,10 +41,10 @@ const addVideo = async (req, res) => {
       return res.status(403).json({ message: '❌ غير مصرح لك بإضافة فيديوهات لهذا الكورس!' });
     }
 
-    // إنشاء الفيديو
+    // إنشاء الفيديو مع تعديل مسار الفيديو ليكون رابط URL نسبي
     const video = new Video({
       title,
-      videoPath: req.file.path,
+      videoPath: `/uploads/videos/${req.file.filename}`,  // هنا التعديل المهم
       courseId,
       order: order || 1, // قيمة افتراضية لو الحقل مش موجود
       course: course || 'غير محدد', // قيمة افتراضية

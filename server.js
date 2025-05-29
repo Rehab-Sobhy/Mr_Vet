@@ -1,9 +1,16 @@
 // استدعاء مكتبة إكسبريس لتشغيل السيرفر
 const express = require('express');
+// إنشاء التطبيق باستخدام Express
+const app = express();
 // استدعاء مكتبة Mongoose لربط التطبيق مع MongoDB
 const mongoose = require('mongoose');
 // تحميل متغيرات البيئة من ملف .env
 require('dotenv').config();
+// استدعاء مكتبة cors
+const cors = require('cors');
+
+// تفعيل CORS
+app.use(cors());
 
 // استدعاء الملفات الخاصة بالمسارات
 const userRoutes = require('./routes/userRoute');
@@ -19,9 +26,6 @@ const authRoutes = require('./routes/authRoute'); // ✅ استدعاء مسار
 
 // استدعاء Middleware لمعالجة الأخطاء
 const errorMiddleware = require('./middleware/errorHandler');
-
-// إنشاء التطبيق باستخدام Express
-const app = express();
 
 // تمكين استقبال البيانات بصيغة JSON من الطلبات
 app.use(express.json());
@@ -43,6 +47,7 @@ const connectDB = async () => {
 
 // تنفيذ الاتصال بقاعدة البيانات
 connectDB();
+
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

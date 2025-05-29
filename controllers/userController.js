@@ -16,6 +16,16 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+// ✅ جلب كل أسماء المحاضرين
+exports.getAllInstructors = async (req, res) => {
+  try {
+    const instructors = await User.find({ role: 'instructor' }).select('name email');
+    res.status(200).json({ instructors });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء جلب المحاضرين', error: err.message });
+  }
+};
+
 // ✅ تسجيل مستخدم جديد
 exports.register = async (req, res) => {
   try {

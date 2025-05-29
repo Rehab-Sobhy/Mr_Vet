@@ -27,6 +27,14 @@ router.get(
   courseController.checkEnrollment
 );
 
+// ✅ حذف فيديو من كورس (للإنستركتور فقط)
+router.delete(
+  '/:courseId/videos/:videoId',
+  authMiddleware,
+  roleMiddleware(['instructor']),
+  courseController.deleteVideoFromCourse
+);
+
 // ✅ جلب كل الكورسات
 router.get('/', courseController.getAllCourses);
 

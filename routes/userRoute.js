@@ -19,6 +19,9 @@ router.delete('/:id', authMiddleware, userController.deleteUser);
 // ✅ رفع صورة الملف الشخصي
 router.post('/profile/upload', authMiddleware, upload.single('profileImage'), userController.uploadProfileImage);
 
+// ✅ جلب كل أسماء المحاضرين
+router.get('/instructors', userController.getAllInstructors);
+
 // ✅ جلب بيانات المستخدم من التوكن (بما فيها الصورة والكورسات)
 router.get('/me', authMiddleware, async (req, res) => {
   try {

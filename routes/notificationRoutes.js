@@ -6,11 +6,8 @@ const authMiddleware = require('../middleware/authMiddleware');
 // ✅ إنشاء إشعار جديد
 router.post('/', authMiddleware, notificationController.createNotification);
 
-// ✅ جلب الإشعارات الخاصة بمستخدم معين
-router.get('/:userId', authMiddleware, notificationController.getUserNotifications);
-
-// ✅ تحديث حالة الإشعار (تمت قراءته)
-router.put('/:id/read', authMiddleware, notificationController.markNotificationAsRead);
+// ✅ جلب الإشعارات الخاصة بالمستخدم الحالي
+router.get('/my', authMiddleware, notificationController.getUserNotifications);
 
 // ✅ وضع علامة "مقروء" على إشعار معين
 router.post('/mark-as-read', authMiddleware, notificationController.markAsRead);

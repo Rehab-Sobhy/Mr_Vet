@@ -27,13 +27,8 @@ const createNotification = async (req, res) => {
 // ✅ جلب الإشعارات الخاصة بمستخدم معين
 const getUserNotifications = async (req, res) => {
   try {
-    const { userId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({ message: '❌ معرف المستخدم مطلوب!' });
-    }
-
-    const notifications = await Notification.find({ userId }).sort({ createdAt: -1 });
+    // جلب الإشعارات للمستخدم الحالي فقط
+    const notifications = await Notification.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json({ message: '✅ تم جلب الإشعارات بنجاح!', notifications });
   } catch (error) {
     console.error("❌ Error fetching user notifications:", error);
@@ -41,12 +36,12 @@ const getUserNotifications = async (req, res) => {
   }
 };
 
-// تعليم إشعار كمقروء
+// ✅ تعليم إشعار كمقروء
 const markAsRead = async (req, res) => {
   try {
     const { notificationId } = req.body;
     const notification = await Notification.findOneAndUpdate(
-      { _id: notificationId, user: req.user._id },
+      { _id: notificationId, userId: req.user._id },
       { read: true },
       { new: true }
     );
@@ -57,10 +52,10 @@ const markAsRead = async (req, res) => {
   }
 };
 
-// تعليم كل الإشعارات كمقروءة
+// ✅ تعليم كل الإشعارات كمقروءة
 const markAllAsRead = async (req, res) => {
   try {
-    await Notification.updateMany({ user: req.user._id, read: false }, { read: true });
+    await Notification.updateMany({ userId: req.user._id, read: false }, { read: true });
     res.status(200).json({ message: '✅ تم تعليم كل الإشعارات كمقروءة' });
   } catch (err) {
     res.status(500).json({ message: '❌ حدث خطأ أثناء التعليم', error: err.message });

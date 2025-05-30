@@ -13,7 +13,7 @@ const createNotification = async (req, res) => {
       userId,
       title,
       message,
-      read: false, // الإشعار غير مقروء عند الإنشاء
+      read: false,
     });
 
     await notification.save();
@@ -42,7 +42,7 @@ const getUserNotifications = async (req, res) => {
 };
 
 // تعليم إشعار كمقروء
-exports.markAsRead = async (req, res) => {
+const markAsRead = async (req, res) => {
   try {
     const { notificationId } = req.body;
     const notification = await Notification.findOneAndUpdate(
@@ -58,7 +58,7 @@ exports.markAsRead = async (req, res) => {
 };
 
 // تعليم كل الإشعارات كمقروءة
-exports.markAllAsRead = async (req, res) => {
+const markAllAsRead = async (req, res) => {
   try {
     await Notification.updateMany({ user: req.user._id, read: false }, { read: true });
     res.status(200).json({ message: '✅ تم تعليم كل الإشعارات كمقروءة' });

@@ -146,22 +146,33 @@ exports.activateUserInCourse = async (req, res) => {
     const { userId } = req.body;
 
     // تحقق من وجود المستخدم
-    const user = await require('../models/User').findById(userId);
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: '❌ المستخدم غير موجود' });
 
     // تحقق من وجود الكورس
-    const course = await require('../models/Course').findById(courseId);
+    const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
 
     // تحقق إذا كان الطالب مشترك بالفعل
-    if (user.enrolledCourses.includes(courseId)) {
-      return res.status(400).json({ message: '❌ الطالب مفعل بالفعل في هذا الكورس' });
+    if (!user.enrolledCourses.includes(courseId)) {
+      user.enrolledCourses.push(courseId);
+      await user.save();
     }
 
-    user.enrolledCourses.push(courseId);
-    await user.save();
+    // إضافة الاشتراك في جدول Subscription إذا لم يكن موجود
+    const Subscription = require('../models/Subscription');
+    const exists = await Subscription.findOne({ userId, courseId, status: 'active' });
+    if (!exists) {
+      await Subscription.create({
+        userId,
+        courseId,
+        startDate: new Date(),
+        endDate: null,
+        status: 'active'
+      });
+    }
 
-    res.status(200).json({ message: '✅ تم تفعيل الطالب في الكورس بنجاح' });
+    res.status(200).json({ message: '✅ تم تفعيل الطالب في الكورس وتسجيل الاشتراك بنجاح' });
   } catch (err) {
     res.status(500).json({ message: '❌ حدث خطأ أثناء التفعيل', error: err.message });
   }

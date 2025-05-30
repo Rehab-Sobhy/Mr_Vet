@@ -31,7 +31,7 @@ router.get(
 router.delete(
   '/:courseId/videos/:videoId',
   authMiddleware,
-  roleMiddleware(['instructor']),
+  roleMiddleware(['admin', 'instructor']),
   courseController.deleteVideoFromCourse
 );
 
@@ -42,12 +42,20 @@ router.get('/', courseController.getAllCourses);
 router.post(
   '/create',
   authMiddleware,
-  roleMiddleware(['instructor', 'admin']),
+  roleMiddleware(['admin', 'instructor']),
   upload.fields([
     { name: 'courseImage', maxCount: 1 }, // رفع صورة الكورس
     { name: 'videos' }, // رفع فيديوهات الكورس بدون حد أقصى
   ]),
   courseController.createCourse
+);
+
+// ✅ تفعيل مستخدم في كورس (للأدمن والإنستركتور فقط)
+router.post(
+  '/:courseId/activate-user',
+  authMiddleware,
+  roleMiddleware(['admin']),
+  courseController.activateUserInCourse
 );
 
 module.exports = router;

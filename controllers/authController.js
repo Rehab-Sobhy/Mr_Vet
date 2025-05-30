@@ -167,3 +167,14 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: '❌ حدث خطأ أثناء إعادة تعيين كلمة السر', error: err.message });
   }
 };
+
+// تسجيل الخروج (لو بتستخدم JWT فقط، غالبًا يتم حذف التوكن من الفرونت فقط)
+// لو عندك activeToken في User:
+exports.logout = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.user._id, { activeToken: null });
+    res.status(200).json({ message: '✅ تم تسجيل الخروج بنجاح' });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء تسجيل الخروج', error: err.message });
+  }
+};

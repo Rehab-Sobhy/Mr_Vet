@@ -1,6 +1,7 @@
 // controllers/userController.js
 
 const User = require("../models/User");
+const Course = require("../models/Course");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -96,6 +97,11 @@ exports.updateUser = async (req, res) => {
       return res.status(400).json({ msg: "❌ معرف المستخدم مطلوب" });
     }
 
+    // السماح للأدمن أو المستخدم نفسه فقط
+    if (req.user.role !== 'admin' && req.user._id.toString() !== id) {
+      return res.status(403).json({ msg: "❌ غير مصرح لك بتعديل هذا المستخدم" });
+    }
+
     // تحديث بيانات المستخدم
     const updated = await User.findByIdAndUpdate(id, req.body, { new: true, runValidators: true }).select("-password");
     if (!updated) {
@@ -113,21 +119,46 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-
-    // التحقق من وجود معرف المستخدم
-    if (!id) {
-      return res.status(400).json({ msg: "❌ معرف المستخدم مطلوب" });
-    }
-
-    // حذف المستخدم
     const deleted = await User.findByIdAndDelete(id);
     if (!deleted) {
       return res.status(404).json({ msg: "❌ المستخدم غير موجود" });
     }
-
     res.status(200).json({ msg: "✅ تم حذف المستخدم بنجاح" });
   } catch (err) {
-    console.error("❌ Error deleting user:", err);
     res.status(500).json({ msg: "❌ فشل في الحذف", error: err.message });
+  }
+};
+
+// ✅ جلب المحاضرين مع الكورسات (بروفايل كامل)
+exports.getInstructorsWithCourses = async (req, res) => {
+  try {
+    const instructors = await User.find({ role: 'instructor' })
+      .select('-password') // كل بيانات البروفايل ما عدا الباسورد
+      .lean();
+
+    const results = await Promise.all(
+      instructors.map(async (inst) => {
+        const courses = await Course.find({ instructor: inst._id }).select('-__v');
+        return { ...inst, courses };
+      })
+    );
+
+    res.status(200).json({ instructors: results });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء جلب المحاضرين مع الكورسات', error: err.message });
+  }
+};
+
+// حذف حساب المستخدم بنفسه
+exports.deleteMyAccount = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const deleted = await User.findByIdAndDelete(userId);
+    if (!deleted) {
+      return res.status(404).json({ msg: "❌ المستخدم غير موجود" });
+    }
+    res.status(200).json({ msg: "✅ تم حذف الحساب بنجاح" });
+  } catch (err) {
+    res.status(500).json({ msg: "❌ فشل في حذف الحساب", error: err.message });
   }
 };

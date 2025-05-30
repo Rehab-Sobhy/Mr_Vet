@@ -119,23 +119,50 @@ exports.deleteVideoFromCourse = async (req, res) => {
   try {
     const { courseId, videoId } = req.params;
     const course = await Course.findById(courseId);
-
     if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
 
-    // تحقق أن المستخدم هو الإنستركتور صاحب الكورس
-    if (course.instructor.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: '❌ غير مصرح لك بحذف الفيديو من هذا الكورس' });
+    if (
+      course.instructor.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      return res.status(403).json({ message: '❌ غير مصرح لك' });
     }
 
-    // احذف الفيديو من مصفوفة الفيديوهات
     course.videos = course.videos.filter(id => id.toString() !== videoId);
     await course.save();
 
-    // احذف الفيديو من قاعدة بيانات Video أيضًا
     await Video.findByIdAndDelete(videoId);
 
     res.status(200).json({ message: '✅ تم حذف الفيديو من الكورس بنجاح' });
   } catch (err) {
     res.status(500).json({ message: '❌ حدث خطأ أثناء حذف الفيديو', error: err.message });
+  }
+};
+
+// ✅ تفعيل مستخدم في كورس
+exports.activateUserInCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { userId } = req.body;
+
+    // تحقق من وجود المستخدم
+    const user = await require('../models/User').findById(userId);
+    if (!user) return res.status(404).json({ message: '❌ المستخدم غير موجود' });
+
+    // تحقق من وجود الكورس
+    const course = await require('../models/Course').findById(courseId);
+    if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
+
+    // تحقق إذا كان الطالب مشترك بالفعل
+    if (user.enrolledCourses.includes(courseId)) {
+      return res.status(400).json({ message: '❌ الطالب مفعل بالفعل في هذا الكورس' });
+    }
+
+    user.enrolledCourses.push(courseId);
+    await user.save();
+
+    res.status(200).json({ message: '✅ تم تفعيل الطالب في الكورس بنجاح' });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء التفعيل', error: err.message });
   }
 };

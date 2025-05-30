@@ -41,26 +41,30 @@ const getUserNotifications = async (req, res) => {
   }
 };
 
-// ✅ تحديث حالة الإشعار (تمت قراءته)
-const markNotificationAsRead = async (req, res) => {
+// تعليم إشعار كمقروء
+exports.markAsRead = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const notification = await Notification.findByIdAndUpdate(
-      id,
+    const { notificationId } = req.body;
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, user: req.user._id },
       { read: true },
       { new: true }
     );
-
-    if (!notification) {
-      return res.status(404).json({ message: '❌ الإشعار غير موجود' });
-    }
-
-    res.status(200).json({ message: '✅ تم تحديث حالة الإشعار بنجاح', notification });
-  } catch (error) {
-    console.error("❌ Error updating notification:", error);
-    res.status(500).json({ message: '❌ فشل في تحديث الإشعار', error: error.message });
+    if (!notification) return res.status(404).json({ message: '❌ الإشعار غير موجود' });
+    res.status(200).json({ message: '✅ تم تعليم الإشعار كمقروء', notification });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء التعليم', error: err.message });
   }
 };
 
-module.exports = { createNotification, getUserNotifications, markNotificationAsRead };
+// تعليم كل الإشعارات كمقروءة
+exports.markAllAsRead = async (req, res) => {
+  try {
+    await Notification.updateMany({ user: req.user._id, read: false }, { read: true });
+    res.status(200).json({ message: '✅ تم تعليم كل الإشعارات كمقروءة' });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء التعليم', error: err.message });
+  }
+};
+
+module.exports = { createNotification, getUserNotifications, markAsRead, markAllAsRead };

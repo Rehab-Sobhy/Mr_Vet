@@ -1,7 +1,7 @@
 const Course = require('../models/Course');
 const User = require('../models/User');
 const Video = require('../models/Video');
-
+const Subscription = require('../models/Subscription');
 // ✅ جلب كل الكورسات
 exports.getAllCourses = async (req, res) => {
   try {
@@ -175,5 +175,51 @@ exports.activateUserInCourse = async (req, res) => {
     res.status(200).json({ message: '✅ تم تفعيل الطالب في الكورس وتسجيل الاشتراك بنجاح' });
   } catch (err) {
     res.status(500).json({ message: '❌ حدث خطأ أثناء التفعيل', error: err.message });
+  }
+};
+
+// ✅ تحديث بيانات الكورس
+exports.updateCourse = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const course = await Course.findById(id);
+    if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
+
+    // السماح فقط للإنستراكتور صاحب الكورس أو الأدمن
+    if (
+      course.instructor.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      return res.status(403).json({ message: '❌ غير مصرح لك بتعديل هذا الكورس' });
+    }
+
+    Object.assign(course, req.body);
+    await course.save();
+
+    res.status(200).json({ message: '✅ تم تعديل الكورس بنجاح', course });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء التعديل', error: err.message });
+  }
+};
+
+// ✅ حذف كورس
+exports.deleteCourse = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const course = await Course.findById(id);
+    if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
+
+    // السماح فقط للإنستراكتور صاحب الكورس أو الأدمن
+    if (
+      course.instructor.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      return res.status(403).json({ message: '❌ غير مصرح لك بحذف هذا الكورس' });
+    }
+
+    await course.deleteOne();
+    res.status(200).json({ message: '✅ تم حذف الكورس بنجاح' });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء الحذف', error: err.message });
   }
 };

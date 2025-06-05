@@ -58,4 +58,20 @@ router.post(
   courseController.activateUserInCourse
 );
 
+// ✅ تحديث بيانات الكورس
+router.put(
+  '/:id',
+  authMiddleware,
+  roleMiddleware(['admin', 'instructor']),
+  courseController.updateCourse
+);
+
+// ✅ حذف كورس (للأدمن والإنستركتور فقط)
+router.delete(
+  '/:id',
+  authMiddleware,
+  roleMiddleware(['admin', 'instructor']),
+  courseController.deleteCourse
+);
+
 module.exports = router;

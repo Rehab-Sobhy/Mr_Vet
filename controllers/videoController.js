@@ -86,6 +86,6 @@ const getVideosByCourse = async (req, res) => {
   }
 };
 
-router.put('/', authMiddleware, roleMiddleware(['admin']), settingsController.updateSettings);
+
 
 module.exports = { addVideo, getVideosByCourse };

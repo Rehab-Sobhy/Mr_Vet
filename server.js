@@ -8,9 +8,13 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 // استدعاء مكتبة cors
 const cors = require('cors');
+// استدعاء مكتبة helmet لتعزيز أمان التطبيق
+const helmet = require('helmet');
 
 // تفعيل CORS
 app.use(cors());
+// تفعيل Helmet
+app.use(helmet());
 
 // استدعاء الملفات الخاصة بالمسارات
 const userRoutes = require('./routes/userRoute');

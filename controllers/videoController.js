@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const Video = require('../models/Video');
 const Course = require('../models/Course');
+const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware');
+const settingsController = require('../controllers/settingsController');
 
 // ✅ إضافة فيديو جديد مربوط بكورس
 const addVideo = async (req, res) => {
@@ -82,5 +85,7 @@ const getVideosByCourse = async (req, res) => {
     res.status(500).json({ message: '❌ فشل في جلب الفيديوهات', error: error.message });
   }
 };
+
+router.put('/', authMiddleware, roleMiddleware(['admin']), settingsController.updateSettings);
 
 module.exports = { addVideo, getVideosByCourse };

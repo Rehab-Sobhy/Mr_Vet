@@ -1,6 +1,7 @@
 const Material = require('../models/Material');
 const Course = require('../models/Course');
-
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' }); // تأكد من إعداد مسار التخزين الصحيح
 
 // ✅ رفع ملف PDF/ZIP
 exports.uploadMaterial = async (req, res) => {
@@ -49,5 +50,29 @@ exports.getMaterials = async (req, res) => {
   } catch (error) {
     console.error('❌ Error fetching materials:', error);
     res.status(500).json({ message: '❌ فشل في جلب الملفات', error: error.message });
+  }
+};
+
+exports.deleteMaterial = async (req, res) => {
+  try {
+    const { materialId } = req.params;
+    const material = await Material.findById(materialId);
+    if (!material) {
+      return res.status(404).json({ message: '❌ المادة غير موجودة' });
+    }
+
+    // السماح فقط للإنستراكتور صاحب الكورس أو الأدمن
+    const course = await Course.findById(material.courseId);
+    if (
+      course.instructor.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      return res.status(403).json({ message: '❌ غير مصرح لك بحذف هذه المادة' });
+    }
+
+    await material.deleteOne();
+    res.status(200).json({ message: '✅ تم حذف المادة بنجاح' });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء الحذف', error: err.message });
   }
 };

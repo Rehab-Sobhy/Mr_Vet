@@ -1,5 +1,10 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const express = require('express');
+const router = express.Router();
+const materialController = require('../controllers/materialController');
+const roleMiddleware = require('../middleware/roleMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.header('Authorization');
@@ -24,5 +29,13 @@ const authMiddleware = async (req, res, next) => {
     res.status(401).json({ message: '❌ Invalid Token: التوكن غير صالح!' });
   }
 };
+
+router.post(
+  '/:courseId',
+  authMiddleware,
+  roleMiddleware(['admin', 'instructor']),
+  upload.single('file'),
+  materialController.uploadMaterial
+);
 
 module.exports = authMiddleware;

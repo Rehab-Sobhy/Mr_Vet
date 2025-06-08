@@ -9,7 +9,7 @@ const roleMiddleware = require('../middleware/roleMiddleware');
 router.post(
   '/add',
   authMiddleware, // التحقق من تسجيل الدخول
-  roleMiddleware(['instructor']), // التحقق من الصلاحيات
+  roleMiddleware(['admin', 'instructor']), // التحقق من الصلاحيات
   upload.single('video'), // رفع فيديو واحد
   addVideo
 );

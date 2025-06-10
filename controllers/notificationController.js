@@ -1,26 +1,25 @@
 const Notification = require('../models/Notification');
 
 // ✅ إنشاء إشعار جديد
-const createNotification = async (req, res) => {
+exports.createNotification = async (req, res) => {
   try {
-    const { userId, title, message } = req.body;
-
-    if (!userId || !title || !message) {
-      return res.status(400).json({ message: '❌ كل الحقول مطلوبة: userId, title, message' });
+    const { userId, message, type } = req.body;
+    if (!userId || !message || !type) {
+      return res.status(400).json({ message: '❌ كل الحقول مطلوبة: userId, message, type' });
     }
 
     const notification = new Notification({
       userId,
-      title,
       message,
+      type,
       read: false,
+      createdAt: new Date()
     });
 
     await notification.save();
     res.status(201).json({ message: '✅ تم إنشاء الإشعار بنجاح!', notification });
-  } catch (error) {
-    console.error("❌ Error creating notification:", error);
-    res.status(500).json({ message: '❌ فشل في إنشاء الإشعار', error: error.message });
+  } catch (err) {
+    res.status(500).json({ message: '❌ فشل في إنشاء الإشعار', error: err.message });
   }
 };
 

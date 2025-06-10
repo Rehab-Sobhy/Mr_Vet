@@ -179,26 +179,27 @@ exports.activateUserInCourse = async (req, res) => {
 };
 
 // ✅ تحديث بيانات الكورس
+// Option 1: Use set() and save() (as above)
+// Option 2: Use findByIdAndUpdate
 exports.updateCourse = async (req, res) => {
   try {
     const { id } = req.params;
-    const course = await Course.findById(id);
-    if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
+    const allowedFields = ['title', 'description', 'price', 'instructor', 'category', 'image', 'duration', 'level', 'tags'];
+    const updateFields = {};
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) updateFields[field] = req.body[field];
+    });
 
-    // السماح فقط للإنستراكتور صاحب الكورس أو الأدمن
-    if (
-      course.instructor.toString() !== req.user._id.toString() &&
-      req.user.role !== 'admin'
-    ) {
-      return res.status(403).json({ message: '❌ غير مصرح لك بتعديل هذا الكورس' });
-    }
+    const course = await Course.findByIdAndUpdate(
+      id,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    );
+    if (!course) return res.status(404).json({ message: '❌ Course not found' });
 
-    Object.assign(course, req.body);
-    await course.save();
-
-    res.status(200).json({ message: '✅ تم تعديل الكورس بنجاح', course });
+    res.status(200).json({ message: '✅ Course updated successfully', course });
   } catch (err) {
-    res.status(500).json({ message: '❌ حدث خطأ أثناء التعديل', error: err.message });
+    res.status(500).json({ message: '❌ Error updating course', error: err.message });
   }
 };
 
@@ -221,5 +222,23 @@ exports.deleteCourse = async (req, res) => {
     res.status(200).json({ message: '✅ تم حذف الكورس بنجاح' });
   } catch (err) {
     res.status(500).json({ message: '❌ حدث خطأ أثناء الحذف', error: err.message });
+  }
+};
+
+// ✅ إضافة مادة دراسية لكورس
+exports.addSubjectToCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params; // تأكد من استخدام req.params.courseId
+    const { subject } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ message: '❌ Course not found' });
+
+    course.subjects.push(subject);
+    await course.save();
+
+    res.status(200).json({ message: '✅ Subject added', course });
+  } catch (err) {
+    res.status(500).json({ message: '❌ Error adding subject', error: err.message });
   }
 };

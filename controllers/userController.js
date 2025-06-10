@@ -153,12 +153,20 @@ exports.getInstructorsWithCourses = async (req, res) => {
 exports.deleteMyAccount = async (req, res) => {
   try {
     const userId = req.user._id;
-    const deleted = await User.findByIdAndDelete(userId);
-    if (!deleted) {
-      return res.status(404).json({ msg: "❌ المستخدم غير موجود" });
-    }
+    await User.findByIdAndDelete(userId);
     res.status(200).json({ msg: "✅ تم حذف الحساب بنجاح" });
   } catch (err) {
     res.status(500).json({ msg: "❌ فشل في حذف الحساب", error: err.message });
+  }
+};
+
+// تحديث حساب المستخدم بنفسه
+exports.updateMyAccount = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const updated = await User.findByIdAndUpdate(userId, req.body, { new: true, runValidators: true }).select('-password');
+    res.status(200).json({ msg: "✅ تم تحديث الحساب بنجاح", updated });
+  } catch (err) {
+    res.status(500).json({ msg: "❌ فشل في تحديث الحساب", error: err.message });
   }
 };

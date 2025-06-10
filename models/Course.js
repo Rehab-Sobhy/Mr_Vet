@@ -8,6 +8,7 @@ const courseSchema = new mongoose.Schema({
   courseImage: { type: String }, // صورة الكورس
   videos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Video' }], // ربط الفيديوهات بجدول الفيديوهات
   instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // المدرس الذي أنشأ الكورس
+  subjects: [{ type: String }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Course', courseSchema);

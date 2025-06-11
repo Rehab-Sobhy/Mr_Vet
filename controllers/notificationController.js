@@ -1,7 +1,7 @@
 const Notification = require('../models/Notification');
 
 // ✅ إنشاء إشعار جديد
-exports.createNotification = async (req, res) => {
+const createNotification = async (req, res) => {
   try {
     const { userId, message, type } = req.body;
     if (!userId || !message || !type) {
@@ -24,7 +24,7 @@ exports.createNotification = async (req, res) => {
 };
 
 // ✅ جلب الإشعارات الخاصة بمستخدم معين
-exports.getUserNotifications = async (req, res) => {
+const getUserNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json({ message: '✅ تم جلب الإشعارات بنجاح!', notifications });

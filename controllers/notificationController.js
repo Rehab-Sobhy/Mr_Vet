@@ -24,13 +24,11 @@ exports.createNotification = async (req, res) => {
 };
 
 // ✅ جلب الإشعارات الخاصة بمستخدم معين
-const getUserNotifications = async (req, res) => {
+exports.getUserNotifications = async (req, res) => {
   try {
-    // جلب الإشعارات للمستخدم الحالي فقط
     const notifications = await Notification.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json({ message: '✅ تم جلب الإشعارات بنجاح!', notifications });
   } catch (error) {
-    console.error("❌ Error fetching user notifications:", error);
     res.status(500).json({ message: '❌ فشل في جلب الإشعارات', error: error.message });
   }
 };

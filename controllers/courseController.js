@@ -184,22 +184,32 @@ exports.activateUserInCourse = async (req, res) => {
 exports.updateCourse = async (req, res) => {
   try {
     const { id } = req.params;
-    const allowedFields = ['title', 'description', 'price', 'instructor', 'category', 'image', 'duration', 'level', 'tags'];
+    const allowedFields = [
+      'title', 'description', 'price', 'instructor', 'category',
+      'courseImage', 'videos', 'subjects'
+    ];
     const updateFields = {};
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) updateFields[field] = req.body[field];
     });
 
-    const course = await Course.findByIdAndUpdate(
-      id,
-      { $set: updateFields },
-      { new: true, runValidators: true }
-    );
-    if (!course) return res.status(404).json({ message: '❌ Course not found' });
+    const course = await Course.findById(id);
+    if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
 
-    res.status(200).json({ message: '✅ Course updated successfully', course });
+    // السماح فقط للإنستراكتور صاحب الكورس أو الأدمن
+    if (
+      course.instructor.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      return res.status(403).json({ message: '❌ غير مصرح لك بتعديل هذا الكورس' });
+    }
+
+    Object.assign(course, updateFields);
+    await course.save();
+
+    res.status(200).json({ message: '✅ تم تعديل الكورس بنجاح', course });
   } catch (err) {
-    res.status(500).json({ message: '❌ Error updating course', error: err.message });
+    res.status(500).json({ message: '❌ حدث خطأ أثناء التعديل', error: err.message });
   }
 };
 
@@ -228,17 +238,17 @@ exports.deleteCourse = async (req, res) => {
 // ✅ إضافة مادة دراسية لكورس
 exports.addSubjectToCourse = async (req, res) => {
   try {
-    const { courseId } = req.params; // تأكد من استخدام req.params.courseId
+    const { courseId } = req.params;
     const { subject } = req.body;
 
     const course = await Course.findById(courseId);
-    if (!course) return res.status(404).json({ message: '❌ Course not found' });
+    if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
 
     course.subjects.push(subject);
     await course.save();
 
-    res.status(200).json({ message: '✅ Subject added', course });
+    res.status(200).json({ message: '✅ تم إضافة المادة', course });
   } catch (err) {
-    res.status(500).json({ message: '❌ Error adding subject', error: err.message });
+    res.status(500).json({ message: '❌ حدث خطأ أثناء الإضافة', error: err.message });
   }
 };

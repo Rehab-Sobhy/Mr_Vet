@@ -54,8 +54,8 @@ exports.getUserSubscriptions = async (req, res) => {
     const userId = req.user._id;
     const subscriptions = await Subscription.find({ userId }).populate('courseId');
     res.status(200).json({ subscriptions });
-  } catch (error) {
-    res.status(500).json({ message: '❌ حدث خطأ أثناء جلب الاشتراكات', error: error.message });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء جلب الاشتراكات', error: err.message });
   }
 };
 

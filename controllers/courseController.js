@@ -145,29 +145,24 @@ exports.activateUserInCourse = async (req, res) => {
     const { courseId } = req.params;
     const { userId } = req.body;
 
-    // تحقق من وجود المستخدم
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: '❌ المستخدم غير موجود' });
 
-    // تحقق من وجود الكورس
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
 
-    // تحقق إذا كان الطالب مشترك بالفعل
     if (!user.enrolledCourses.includes(courseId)) {
       user.enrolledCourses.push(courseId);
       await user.save();
     }
 
-    // إضافة الاشتراك في جدول Subscription إذا لم يكن موجود
-    const Subscription = require('../models/Subscription');
     const exists = await Subscription.findOne({ userId, courseId, status: 'active' });
     if (!exists) {
       await Subscription.create({
         userId,
         courseId,
         startDate: new Date(),
-        endDate: null,
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // شهر من الآن
         status: 'active'
       });
     }

@@ -152,8 +152,12 @@ exports.getInstructorsWithCourses = async (req, res) => {
 // حذف حساب المستخدم بنفسه
 exports.deleteMyAccount = async (req, res) => {
   try {
+    console.log('USER IN DELETE:', req.user); // أضف هذا السطر
     const userId = req.user._id;
-    await User.findByIdAndDelete(userId);
+    const deleted = await User.findByIdAndDelete(userId);
+    if (!deleted) {
+      return res.status(404).json({ msg: "❌ المستخدم غير موجود" });
+    }
     res.status(200).json({ msg: "✅ تم حذف الحساب بنجاح" });
   } catch (err) {
     res.status(500).json({ msg: "❌ فشل في حذف الحساب", error: err.message });

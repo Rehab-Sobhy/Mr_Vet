@@ -104,7 +104,7 @@ exports.login = async (req, res) => {
     // البحث عن المستخدم
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ msg: "❌ المستخدم غير موجود" });
+      return res.status(404).json({ message: '❌ لا يوجد حساب بهذا البريد الإلكتروني، من فضلك سجل حساب جديد.' });
     }
 
     // مقارنة كلمة المرور

@@ -156,7 +156,7 @@ exports.deleteMyAccount = async (req, res) => {
     const userId = req.user._id;
     const deleted = await User.findByIdAndDelete(userId);
     if (!deleted) {
-      return res.status(404).json({ msg: "❌ المستخدم غير موجود" });
+      return res.status(404).json({ msg: "❌ تم الحذف " });
     }
     res.status(200).json({ msg: "✅ تم حذف الحساب بنجاح" });
   } catch (err) {

@@ -164,7 +164,18 @@ exports.deleteMyAccount = async (req, res) => {
 exports.updateMyAccount = async (req, res) => {
   try {
     const userId = req.user._id;
-    const updated = await User.findByIdAndUpdate(userId, req.body, { new: true, runValidators: true }).select('-password');
+    const allowedFields = ['name', 'email', 'phone', 'bio', 'avatar'];
+    const updateFields = {};
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) updateFields[field] = req.body[field];
+    });
+    if (req.file) {
+      updateFields.avatar = req.file.path;
+    }
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ msg: "❌ لا يوجد بيانات لتحديثها" });
+    }
+    const updated = await User.findByIdAndUpdate(userId, updateFields, { new: true, runValidators: true }).select('-password');
     res.status(200).json({ msg: "✅ تم تحديث الحساب بنجاح", updated });
   } catch (err) {
     res.status(500).json({ msg: "❌ فشل في تحديث الحساب", error: err.message });

@@ -179,29 +179,21 @@ exports.activateUserInCourse = async (req, res) => {
 exports.updateCourse = async (req, res) => {
   try {
     const { id } = req.params;
-    const allowedFields = [
-      'title', 'description', 'price', 'instructor', 'category',
-      'courseImage', 'videos', 'subjects'
-    ];
+    const allowedFields = ['title', 'description', 'price', 'instructor', 'category', 'image', 'duration', 'level', 'tags'];
     const updateFields = {};
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) updateFields[field] = req.body[field];
     });
-
+    if (req.file) {
+      updateFields.image = req.file.path;
+    }
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ message: '❌ لا يوجد بيانات لتحديثها' });
+    }
     const course = await Course.findById(id);
     if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
-
-    // السماح فقط للإنستراكتور صاحب الكورس أو الأدمن
-    if (
-      course.instructor.toString() !== req.user._id.toString() &&
-      req.user.role !== 'admin'
-    ) {
-      return res.status(403).json({ message: '❌ غير مصرح لك بتعديل هذا الكورس' });
-    }
-
     Object.assign(course, updateFields);
     await course.save();
-
     res.status(200).json({ message: '✅ تم تعديل الكورس بنجاح', course });
   } catch (err) {
     res.status(500).json({ message: '❌ حدث خطأ أثناء التعديل', error: err.message });

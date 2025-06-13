@@ -1,11 +1,18 @@
 const Material = require('../models/Material');
 const Course = require('../models/Course');
+const mongoose = require('mongoose');
 
 // ✅ رفع ملف PDF/ZIP
 exports.uploadMaterial = async (req, res) => {
   try {
     const { courseId } = req.params;
     const { title, description } = req.body;
+
+    // تحقق من صحة الـ ObjectId
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: '❌ معرف الكورس غير صالح' });
+    }
+
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
     if (

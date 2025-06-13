@@ -41,6 +41,5 @@ router.get('/instructors-with-courses', userController.getInstructorsWithCourses
 
 // حذف حساب المستخدم بنفسه
 router.delete('/me', authMiddleware, userController.deleteMyAccount);
-router.put('/me', authMiddleware, userController.updateMyAccount);
 
 module.exports = router;

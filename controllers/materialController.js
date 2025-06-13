@@ -36,3 +36,34 @@ exports.uploadMaterial = async (req, res) => {
     res.status(500).json({ message: '❌ فشل في رفع الملف', error: error.message });
   }
 };
+
+// ✅ عرض الملفات المرتبطة بكورس معين
+exports.getMaterials = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: '❌ معرف الكورس غير صالح' });
+    }
+    const materials = await Material.find({ courseId });
+    res.status(200).json({ materials });
+  } catch (error) {
+    res.status(500).json({ message: '❌ فشل في جلب المواد', error: error.message });
+  }
+};
+
+// ✅ حذف مادة
+exports.deleteMaterial = async (req, res) => {
+  try {
+    const { materialId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(materialId)) {
+      return res.status(400).json({ message: '❌ معرف المادة غير صالح' });
+    }
+    const material = await Material.findByIdAndDelete(materialId);
+    if (!material) {
+      return res.status(404).json({ message: '❌ المادة غير موجودة' });
+    }
+    res.status(200).json({ message: '✅ تم حذف المادة بنجاح' });
+  } catch (error) {
+    res.status(500).json({ message: '❌ فشل في حذف المادة', error: error.message });
+  }
+};

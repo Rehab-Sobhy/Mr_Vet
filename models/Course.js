@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 const courseSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
-  price: { type: Number, required: true },
-  category: { type: String, required: true },
-  courseImage: { type: String }, // صورة الكورس
-  videos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Video' }], // ربط الفيديوهات بجدول الفيديوهات
-  instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // المدرس الذي أنشأ الكورس
-  subjects: [{ type: String }]
-}, { timestamps: true });
+  image: { type: String }, // رابط أو اسم صورة الكورس
+  price: { type: Number, default: 0 }, // سعر الكورس
+  instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // الطلاب المسجلين
+  rating: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
+});
 
 module.exports = mongoose.model('Course', courseSchema);

@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../middleware/uploadMiddleware');
 const materialController = require('../controllers/materialController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 
-// ✅ رفع ملف PDF/ZIP
+// رفع ملف
 router.post(
   '/:courseId',
   authMiddleware,
@@ -14,10 +14,10 @@ router.post(
   materialController.uploadMaterial
 );
 
-// ✅ عرض الملفات المرتبطة بكورس معين
-router.get('/:courseId', materialController.getMaterials);
+// جلب المواد الخاصة بكورس
+router.get('/:courseId', authMiddleware, materialController.getMaterials);
 
-// ❌ حذف مادة
+// حذف مادة
 router.delete(
   '/:materialId',
   authMiddleware,

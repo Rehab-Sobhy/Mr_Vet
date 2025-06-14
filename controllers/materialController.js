@@ -7,7 +7,6 @@ exports.uploadMaterial = async (req, res) => {
     const { courseId } = req.params;
     const { title, description } = req.body;
 
-    // تحقق من صحة الـ ObjectId
     if (!mongoose.Types.ObjectId.isValid(courseId)) {
       return res.status(400).json({ message: '❌ معرف الكورس غير صالح' });
     }
@@ -28,7 +27,7 @@ exports.uploadMaterial = async (req, res) => {
 
     const material = await Material.create({
       courseId,
-      filePath: req.file.path,
+      fileUrl: req.file.path,
       fileType: req.file.mimetype,
       title,
       description,
@@ -40,7 +39,6 @@ exports.uploadMaterial = async (req, res) => {
   }
 };
 
-// ✅ عرض الملفات المرتبطة بكورس معين
 exports.getMaterials = async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -54,7 +52,6 @@ exports.getMaterials = async (req, res) => {
   }
 };
 
-// ✅ حذف مادة
 exports.deleteMaterial = async (req, res) => {
   try {
     const { materialId } = req.params;

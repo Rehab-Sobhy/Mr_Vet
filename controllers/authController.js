@@ -82,7 +82,11 @@ exports.register = async (req, res) => {
     });
 
     // إنشاء التوكن
-    const token = generateToken(user._id, user.role);
+    const token = jwt.sign(
+      { _id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     res.status(201).json({ token, user });
   } catch (err) {
@@ -114,7 +118,11 @@ exports.login = async (req, res) => {
     }
 
     // إنشاء التوكن
-    const token = generateToken(user._id, user.role);
+    const token = jwt.sign(
+      { _id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     res.status(200).json({ token, user });
   } catch (err) {

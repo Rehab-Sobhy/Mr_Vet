@@ -1,14 +1,10 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: String,
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: {
-    type: String,
-    enum: ['admin', 'instructor', 'student'], // الأدوار المتاحة
-    default: 'student', // الدور الافتراضي هو طالب
-  },
+  role: { type: String, enum: ['admin', 'instructor', 'student'], default: 'student' },
   profileImage: { type: String }, // مسار صورة الملف الشخصي
   collegeId: {
     type: String,

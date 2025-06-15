@@ -178,25 +178,18 @@ exports.activateUserInCourse = async (req, res) => {
 // Option 2: Use findByIdAndUpdate
 exports.updateCourse = async (req, res) => {
   try {
-    const { id } = req.params;
-    const allowedFields = ['title', 'description', 'price', 'instructor', 'category', 'image', 'duration', 'level', 'tags'];
-    const updateFields = {};
-    allowedFields.forEach(field => {
-      if (req.body[field] !== undefined) updateFields[field] = req.body[field];
-    });
-    if (req.file) {
-      updateFields.image = req.file.path;
+    const { courseId } = req.params;
+    const updates = req.body;
+    if (!updates || Object.keys(updates).length === 0) {
+      return res.status(400).json({ msg: '❌ لا يوجد بيانات لتحديثها' });
     }
-    if (Object.keys(updateFields).length === 0) {
-      return res.status(400).json({ message: '❌ لا يوجد بيانات لتحديثها' });
+    const course = await Course.findByIdAndUpdate(courseId, updates, { new: true });
+    if (!course) {
+      return res.status(404).json({ msg: '❌ الكورس غير موجود' });
     }
-    const course = await Course.findById(id);
-    if (!course) return res.status(404).json({ message: '❌ الكورس غير موجود' });
-    Object.assign(course, updateFields);
-    await course.save();
-    res.status(200).json({ message: '✅ تم تعديل الكورس بنجاح', course });
+    res.status(200).json({ msg: '✅ تم تحديث الكورس بنجاح', course });
   } catch (err) {
-    res.status(500).json({ message: '❌ حدث خطأ أثناء التعديل', error: err.message });
+    res.status(500).json({ msg: '❌ فشل في تحديث الكورس', error: err.message });
   }
 };
 

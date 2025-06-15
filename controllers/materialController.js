@@ -25,9 +25,12 @@ exports.uploadMaterial = async (req, res) => {
       return res.status(400).json({ message: '❌ يجب رفع ملف' });
     }
 
+    // حفظ المسار بشكل يمكن فتحه من المتصفح
+    const fileUrl = `/uploads/${req.file.filename}`;
+
     const material = await Material.create({
       courseId,
-      fileUrl: req.file.path,
+      fileUrl,
       fileType: req.file.mimetype,
       title,
       description,

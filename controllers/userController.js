@@ -169,21 +169,16 @@ exports.deleteMyAccount = async (req, res) => {
 // تحديث حساب المستخدم بنفسه
 exports.updateMyAccount = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const allowedFields = ['name', 'email', 'phone', 'bio', 'avatar'];
-    const updateFields = {};
-    allowedFields.forEach(field => {
-      if (req.body[field] !== undefined) updateFields[field] = req.body[field];
-    });
-    if (req.file) {
-      updateFields.avatar = req.file.path;
+    const updates = req.body;
+    if (!updates || Object.keys(updates).length === 0) {
+      return res.status(400).json({ msg: '❌ لا يوجد بيانات لتحديثها' });
     }
-    if (Object.keys(updateFields).length === 0) {
-      return res.status(400).json({ msg: "❌ لا يوجد بيانات لتحديثها" });
+    const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true });
+    if (!user) {
+      return res.status(404).json({ msg: '❌ المستخدم غير موجود' });
     }
-    const updated = await User.findByIdAndUpdate(userId, updateFields, { new: true, runValidators: true }).select('-password');
-    res.status(200).json({ msg: "✅ تم تحديث الحساب بنجاح", updated });
+    res.status(200).json({ msg: '✅ تم تحديث الحساب بنجاح', user });
   } catch (err) {
-    res.status(500).json({ msg: "❌ فشل في تحديث الحساب", error: err.message });
+    res.status(500).json({ msg: '❌ فشل في تحديث الحساب', error: err.message });
   }
 };

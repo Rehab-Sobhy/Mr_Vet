@@ -1,6 +1,5 @@
 // استدعاء مكتبة إكسبريس لتشغيل السيرفر
 const express = require('express');
-// إنشاء التطبيق باستخدام Express
 const app = express();
 // استدعاء مكتبة Mongoose لربط التطبيق مع MongoDB
 const mongoose = require('mongoose');

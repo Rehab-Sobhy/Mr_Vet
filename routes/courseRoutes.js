@@ -3,7 +3,7 @@ const router = express.Router();
 const courseController = require('../controllers/courseController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
-const upload = require('../middleware/uploadMiddleware'); // Middleware رفع الملفات
+const upload = require('../middleware/uploadMiddleware');
 
 // ✅ جلب الكورسات الخاصة بـ Instructor معين
 router.get(
@@ -60,9 +60,10 @@ router.post(
 
 // ✅ تحديث بيانات الكورس
 router.put(
-  '/:id',
+  '/:courseId',
   authMiddleware,
   roleMiddleware(['admin', 'instructor']),
+  upload.single('courseImage'), // اسم الحقل المستخدم في form-data
   courseController.updateCourse
 );
 

@@ -179,10 +179,23 @@ exports.activateUserInCourse = async (req, res) => {
 exports.updateCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const updates = req.body;
-    if (!updates || Object.keys(updates).length === 0) {
+    const updates = {};
+
+    // اجمع البيانات النصية من form-data
+    if (req.body.title) updates.title = req.body.title;
+    if (req.body.description) updates.description = req.body.description;
+    if (req.body.price) updates.price = req.body.price;
+    if (req.body.category) updates.category = req.body.category;
+
+    // لو فيه صورة جديدة
+    if (req.file) {
+      updates.courseImage = `/uploads/${req.file.filename}`;
+    }
+
+    if (Object.keys(updates).length === 0) {
       return res.status(400).json({ msg: '❌ لا يوجد بيانات لتحديثها' });
     }
+
     const course = await Course.findByIdAndUpdate(courseId, updates, { new: true });
     if (!course) {
       return res.status(404).json({ msg: '❌ الكورس غير موجود' });

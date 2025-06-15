@@ -50,9 +50,11 @@ exports.register = async (req, res) => {
     const user = await User.create({ name, email, password: hashedPassword, role, profileImage });
 
     // إنشاء التوكن
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign(
+      { _id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     res.status(201).json({ token, user });
   } catch (err) {
@@ -61,10 +63,10 @@ exports.register = async (req, res) => {
   }
 };
 
-// ✅ رفع صورة الملف الشخصي
+// ✅ رفع صورة الملف الشخصي (تم التصحيح هنا)
 exports.uploadProfileImage = async (req, res) => {
   try {
-    const userId = req.user.userId; // يفترض أنك تستخدم Middleware لاستخراج userId من التوكن
+    const userId = req.user._id; // <-- تم التصحيح هنا
 
     if (!req.file) {
       return res.status(400).json({ msg: '❌ يجب رفع صورة' });

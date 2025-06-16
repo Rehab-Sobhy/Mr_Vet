@@ -154,12 +154,12 @@ exports.getInstructorsWithCourses = async (req, res) => {
 // حذف حساب المستخدم بنفسه
 exports.deleteMyAccount = async (req, res) => {
   try {
-    console.log('USER IN DELETE:', req.user); // أضف هذا السطر
     const userId = req.user._id;
     const deleted = await User.findByIdAndDelete(userId);
     if (!deleted) {
-      return res.status(404).json({ msg: "❌ تم الحذف " });
+      return res.status(404).json({ msg: "❌ المستخدم غير موجود أو تم حذفه بالفعل" });
     }
+    // يمكنك هنا حذف بيانات مرتبطة أخرى لو أردت (مثلاً كورسات، ملفات...)
     res.status(200).json({ msg: "✅ تم حذف الحساب بنجاح" });
   } catch (err) {
     res.status(500).json({ msg: "❌ فشل في حذف الحساب", error: err.message });
@@ -169,7 +169,19 @@ exports.deleteMyAccount = async (req, res) => {
 // تحديث حساب المستخدم بنفسه
 exports.updateMyAccount = async (req, res) => {
   try {
-    const updates = req.body;
+    // جمع البيانات من body
+    const updates = req.body ? { ...req.body } : {};
+
+    // إذا تم رفع صور
+    if (req.files) {
+      if (req.files.profileImage && req.files.profileImage[0]) {
+        updates.profileImage = req.files.profileImage[0].path.replace(/\\/g, '/');
+      }
+      if (req.files.collegeId && req.files.collegeId[0]) {
+        updates.collegeId = req.files.collegeId[0].path.replace(/\\/g, '/');
+      }
+    }
+
     if (!updates || Object.keys(updates).length === 0) {
       return res.status(400).json({ msg: '❌ لا يوجد بيانات لتحديثها' });
     }

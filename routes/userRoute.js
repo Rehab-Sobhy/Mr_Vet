@@ -42,7 +42,10 @@ router.get('/instructors-with-courses', userController.getInstructorsWithCourses
 // حذف حساب المستخدم بنفسه
 router.delete('/me', authMiddleware, userController.deleteMyAccount);
 
-// تحديث بيانات حساب المستخدم
-router.put('/me', authMiddleware, userController.updateMyAccount);
+// تحديث بيانات حساب المستخدم (يدعم form-data لرفع صورة شخصية وصورة كارنيه)
+router.put('/me', authMiddleware, upload.fields([
+  { name: 'profileImage', maxCount: 1 },
+  { name: 'collegeId', maxCount: 1 }
+]), userController.updateMyAccount);
 
 module.exports = router;

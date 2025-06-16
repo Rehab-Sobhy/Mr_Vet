@@ -1,6 +1,7 @@
 const Material = require('../models/Material');
 const Course = require('../models/Course');
 const mongoose = require('mongoose');
+const path = require('path');
 
 exports.uploadMaterial = async (req, res) => {
   try {
@@ -25,8 +26,10 @@ exports.uploadMaterial = async (req, res) => {
       return res.status(400).json({ message: '❌ يجب رفع ملف' });
     }
 
-    // حفظ المسار بشكل يمكن فتحه من المتصفح
-    const fileUrl = `/uploads/${req.file.filename}`;
+    // استخراج اسم الفولدر من مسار حفظ الملف
+    // مثال: req.file.path = 'uploads/pdfs/1234-file.pdf'
+    const folderName = req.file.destination.split(path.sep).pop();
+    const fileUrl = `/uploads/${folderName}/${req.file.filename}`;
 
     const material = await Material.create({
       courseId,

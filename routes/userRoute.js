@@ -12,7 +12,7 @@ router.get('/', authMiddleware, userController.getAllUsers);
 router.post('/register', userController.register);
 
 // ✅ تحديث بيانات مستخدم
-router.put('/:id', authMiddleware, roleMiddleware(['admin']), userController.updateUser);
+router.put('/:id', authMiddleware, userController.updateUser);
 
 // ✅ حذف مستخدم
 router.delete('/:id', authMiddleware, roleMiddleware(['admin']), userController.deleteUser);

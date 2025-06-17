@@ -54,6 +54,12 @@ connectDB();
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Middleware لخدمة ملفات PDF مع تعيين Content-Type
+app.use('/uploads/pdfs', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/pdf');
+  next();
+});
+
 // ✅ إعداد المسارات
 app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes); // مسارات الكورسات

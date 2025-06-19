@@ -29,6 +29,7 @@ router.delete(
 // Route لخدمة ملفات PDF مباشرة
 router.get('/pdf/:filename', (req, res) => {
   const filePath = path.join(__dirname, '../uploads/pdfs', req.params.filename);
+  console.log('Requested file path:', filePath);
   res.setHeader('Content-Type', 'application/pdf');
   res.sendFile(filePath, (err) => {
     if (err) {

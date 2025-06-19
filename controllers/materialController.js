@@ -3,6 +3,7 @@ const Course = require('../models/Course');
 const mongoose = require('mongoose');
 const path = require('path');
 const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
 
 exports.uploadMaterial = async (req, res) => {
   try {
@@ -29,6 +30,10 @@ exports.uploadMaterial = async (req, res) => {
 
     // حفظ المسار المحلي للملف
     const fileUrl = `/uploads/${req.file.destination.split('/').pop()}/${req.file.filename}`;
+    const fullPath = `${req.file.destination}/${req.file.filename}`;
+    if (!fs.existsSync(fullPath)) {
+      return res.status(500).json({ message: `❌ الملف لم يتم رفعه بشكل صحيح: ${fullPath}` });
+    }
 
     const material = await Material.create({
       courseId,

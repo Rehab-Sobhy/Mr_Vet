@@ -28,7 +28,11 @@ exports.uploadMaterial = async (req, res) => {
 
     // استخراج اسم الفولدر من مسار حفظ الملف
     // مثال: req.file.path = 'uploads/pdfs/1234-file.pdf'
-    const folderName = req.file.destination.split(path.sep).pop();
+    // التحقق من وجود destination في req.file
+    const folderName = req.file.destination
+      ? req.file.destination.split(path.sep).pop()
+      : 'unknown'; // تعيين قيمة افتراضية إذا كانت destination غير موجودة
+
     const fileUrl = `/uploads/${folderName}/${req.file.filename}`;
 
     console.log('File uploaded:', req.file);

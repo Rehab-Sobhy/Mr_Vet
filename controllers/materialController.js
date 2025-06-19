@@ -58,7 +58,7 @@ exports.getMaterials = async (req, res) => {
     const updatedMaterials = materials.map((material) => {
       const signedUrl = cloudinary.url(material.fileUrl, {
         resource_type: 'raw',
-        type: 'authenticated',
+        type: 'upload', // إزالة authenticated مؤقتًا
         sign_url: true,
         secure: true,
       });

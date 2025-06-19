@@ -32,6 +32,7 @@ exports.uploadMaterial = async (req, res) => {
     console.log('File uploaded:', req.file);
     console.log('File URL:', fileUrl);
     console.log('Saving material to database...');
+    console.log('Final File URL:', fileUrl); // تسجيل رابط الملف النهائي
 
     const material = await Material.create({
       courseId,

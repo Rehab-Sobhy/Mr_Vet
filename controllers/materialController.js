@@ -56,16 +56,9 @@ exports.getMaterials = async (req, res) => {
 
     // إنشاء روابط موقعة للملفات
     const updatedMaterials = materials.map((material) => {
-      const signedUrl = cloudinary.url(material.fileUrl, {
-        resource_type: 'raw',
-        type: 'upload', // إزالة authenticated مؤقتًا
-        sign_url: true,
-        secure: true,
-      });
-      console.log('Generated signed URL:', signedUrl);
       return {
         ...material._doc,
-        fileUrl: signedUrl,
+        fileUrl: material.fileUrl, // استخدام الرابط العام مباشرة بدون توقيع
       };
     });
 

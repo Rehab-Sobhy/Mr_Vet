@@ -23,6 +23,7 @@ const storage = new CloudinaryStorage({
       folder: 'uploads', // اسم المجلد العام في Cloudinary
       resource_type: resourceType, // تحديد نوع الملف ديناميكيًا
       format: file.mimetype.split('/')[1], // تحديد صيغة الملف بناءً على نوعه
+      access_mode: 'public', // جعل الملفات عامة للوصول بدون مصادقة
     };
   },
 });

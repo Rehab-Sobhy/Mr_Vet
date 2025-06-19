@@ -2,6 +2,7 @@ const Material = require('../models/Material');
 const Course = require('../models/Course');
 const mongoose = require('mongoose');
 const path = require('path');
+const cloudinary = require('cloudinary').v2;
 
 exports.uploadMaterial = async (req, res) => {
   try {
@@ -50,13 +51,20 @@ exports.getMaterials = async (req, res) => {
       return res.status(400).json({ message: '❌ معرف الكورس غير صالح' });
     }
 
-    // جلب المواد مع تعديل الروابط لتكون inline
+    // جلب المواد من قاعدة البيانات
     const materials = await Material.find({ courseId }).select('fileUrl title description');
 
+    // إنشاء روابط موقعة للملفات
     const updatedMaterials = materials.map((material) => {
+      const signedUrl = cloudinary.url(material.fileUrl, {
+        resource_type: 'raw',
+        type: 'authenticated',
+        sign_url: true,
+        secure: true,
+      });
       return {
         ...material._doc,
-        fileUrl: `${material.fileUrl}?content-disposition=inline&attachment=false`,
+        fileUrl: signedUrl,
       };
     });
 

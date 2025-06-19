@@ -26,14 +26,8 @@ exports.uploadMaterial = async (req, res) => {
       return res.status(400).json({ message: '❌ يجب رفع ملف' });
     }
 
-    // استخراج اسم الفولدر من مسار حفظ الملف
-    // مثال: req.file.path = 'uploads/pdfs/1234-file.pdf'
-    // التحقق من وجود destination في req.file
-    const folderName = req.file.destination
-      ? req.file.destination.split(path.sep).pop()
-      : 'unknown'; // تعيين قيمة افتراضية إذا كانت destination غير موجودة
-
-    const fileUrl = `/uploads/${folderName}/${req.file.filename}`;
+    // استخدام رابط Cloudinary كـ File URL
+    const fileUrl = req.file.path;
 
     console.log('File uploaded:', req.file);
     console.log('File URL:', fileUrl);

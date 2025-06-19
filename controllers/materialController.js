@@ -56,7 +56,7 @@ exports.getMaterials = async (req, res) => {
     const updatedMaterials = materials.map((material) => {
       return {
         ...material._doc,
-        fileUrl: `${material.fileUrl}?content-disposition=inline`,
+        fileUrl: `${material.fileUrl}?content-disposition=inline&attachment=false`,
       };
     });
 

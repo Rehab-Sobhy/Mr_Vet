@@ -1,48 +1,22 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-const ensureFolderExists = (folder) => {
-  if (!fs.existsSync(folder)) {
-    console.log(`Creating folder: ${folder}`); // Logging
-    fs.mkdirSync(folder, { recursive: true });
-  } else {
-    console.log(`Folder exists: ${folder}`); // Logging
-  }
-};
+// إعداد Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let folder;
-    if (file.mimetype.startsWith('video')) {
-      folder = 'uploads/videos';
-    } else if (file.mimetype === 'application/pdf') {
-      folder = 'uploads/pdfs';
-    } else if (file.mimetype.startsWith('image')) {
-      folder = 'uploads/images';
-    } else {
-      return cb(new Error('❌ نوع الملف غير مدعوم!'), false);
-    }
-
-    ensureFolderExists(folder);
-    console.log(`Saving file to: ${folder}`); // Logging
-    cb(null, folder);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    console.log(`File name: ${uniqueName}`); // Logging
-    cb(null, uniqueName);
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'pdfs', // اسم المجلد في Cloudinary
+    resource_type: 'raw', // لدعم ملفات PDF
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['video/mp4', 'application/pdf', 'image/jpeg', 'image/png'];
-  if (!allowedTypes.includes(file.mimetype)) {
-    return cb(new Error('❌ نوع الملف غير مدعوم!'), false);
-  }
-  cb(null, true);
-};
-
-const upload = multer({ storage, fileFilter });
+const upload = multer({ storage });
 
 module.exports = upload;

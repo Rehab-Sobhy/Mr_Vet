@@ -31,6 +31,10 @@ exports.uploadMaterial = async (req, res) => {
     const folderName = req.file.destination.split(path.sep).pop();
     const fileUrl = `/uploads/${folderName}/${req.file.filename}`;
 
+    console.log('File uploaded:', req.file);
+    console.log('File URL:', fileUrl);
+    console.log('Saving material to database...');
+
     const material = await Material.create({
       courseId,
       fileUrl,

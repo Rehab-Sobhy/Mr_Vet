@@ -4,6 +4,7 @@ const materialController = require('../controllers/materialController');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
 const upload = require('../middleware/uploadMiddleware');
+const path = require('path');
 
 // رفع ملف
 router.post(
@@ -24,5 +25,17 @@ router.delete(
   roleMiddleware(['admin', 'instructor']),
   materialController.deleteMaterial
 );
+
+// Route لخدمة ملفات PDF مباشرة
+router.get('/pdf/:filename', (req, res) => {
+  const filePath = path.join(__dirname, '../uploads/pdfs', req.params.filename);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('❌ Error serving PDF:', err);
+      res.status(404).send('File not found');
+    }
+  });
+});
 
 module.exports = router;

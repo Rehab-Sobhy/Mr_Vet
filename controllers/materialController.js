@@ -62,6 +62,7 @@ exports.getMaterials = async (req, res) => {
         sign_url: true,
         secure: true,
       });
+      console.log('Generated signed URL:', signedUrl);
       return {
         ...material._doc,
         fileUrl: signedUrl,

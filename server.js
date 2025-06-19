@@ -9,6 +9,7 @@ require('dotenv').config();
 const cors = require('cors');
 // استدعاء مكتبة helmet لتعزيز أمان التطبيق
 const helmet = require('helmet');
+const fs = require('fs');
 
 // تفعيل CORS
 app.use(cors());
@@ -51,7 +52,6 @@ const connectDB = async () => {
 // تنفيذ الاتصال بقاعدة البيانات
 connectDB();
 
-const path = require('path');
 // تمكين خدمة الملفات الثابتة (Static) لملفات الرفع
 app.use('/uploads', express.static('uploads'));
 
@@ -75,6 +75,13 @@ app.use('/api/auth', authRoutes); // ✅ تم تصحيح المسار
 
 // Middleware لمعالجة الأخطاء
 app.use(errorMiddleware);
+
+// إنشاء جميع مجلدات الرفع تلقائيًا عند تشغيل السيرفر
+['uploads', 'uploads/images', 'uploads/videos', 'uploads/pdfs', 'uploads/others'].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 // ✅ تشغيل السيرفر
 const PORT = process.env.PORT || 5000;

@@ -52,7 +52,8 @@ const connectDB = async () => {
 connectDB();
 
 const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// تمكين خدمة الملفات الثابتة (Static) لملفات الرفع
+app.use('/uploads', express.static('uploads'));
 
 // Middleware لخدمة ملفات PDF مع تعيين Content-Type
 app.use('/uploads/pdfs', (req, res, next) => {

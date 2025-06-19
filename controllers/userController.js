@@ -66,15 +66,16 @@ exports.register = async (req, res) => {
 // ✅ رفع صورة الملف الشخصي (تم التصحيح هنا)
 exports.uploadProfileImage = async (req, res) => {
   try {
-    const userId = req.user._id; // <-- تم التصحيح هنا
+    const userId = req.user._id;
 
     if (!req.file) {
       return res.status(400).json({ msg: '❌ يجب رفع صورة' });
     }
 
+    // حفظ المسار المحلي للصورة
     const user = await User.findByIdAndUpdate(
       userId,
-      { profileImage: req.file.path },
+      { profileImage: `/uploads/images/${req.file.filename}` },
       { new: true }
     );
 

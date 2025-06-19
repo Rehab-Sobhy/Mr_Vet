@@ -27,8 +27,8 @@ exports.uploadMaterial = async (req, res) => {
       return res.status(400).json({ message: '❌ يجب رفع ملف' });
     }
 
-    // استخدم secure_url من Cloudinary (multer-storage-cloudinary يضعه في path)
-    const fileUrl = req.file.path || req.file.secure_url;
+    // حفظ المسار المحلي للملف
+    const fileUrl = `/uploads/${req.file.destination.split('/').pop()}/${req.file.filename}`;
 
     const material = await Material.create({
       courseId,
@@ -52,7 +52,6 @@ exports.getMaterials = async (req, res) => {
     }
 
     const materials = await Material.find({ courseId });
-    // أرجع كل شيء كما هو، خاصة fileUrl
     res.status(200).json({ materials });
   } catch (error) {
     res.status(500).json({ message: '❌ فشل في جلب المواد', error: error.message });

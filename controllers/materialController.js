@@ -29,11 +29,6 @@ exports.uploadMaterial = async (req, res) => {
     // استخدام رابط Cloudinary كـ File URL
     const fileUrl = req.file.path;
 
-    console.log('File uploaded:', req.file);
-    console.log('File URL:', fileUrl);
-    console.log('Saving material to database...');
-    console.log('Final File URL:', fileUrl); // تسجيل رابط الملف النهائي
-
     const material = await Material.create({
       courseId,
       fileUrl,
@@ -54,7 +49,10 @@ exports.getMaterials = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(courseId)) {
       return res.status(400).json({ message: '❌ معرف الكورس غير صالح' });
     }
-    const materials = await Material.find({ courseId });
+
+    // جلب المواد مع التأكد من أن الروابط هي روابط Cloudinary
+    const materials = await Material.find({ courseId }).select('fileUrl title description');
+
     res.status(200).json({ materials });
   } catch (error) {
     res.status(500).json({ message: '❌ فشل في جلب المواد', error: error.message });

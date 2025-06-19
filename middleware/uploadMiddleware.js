@@ -11,9 +11,19 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'pdfs', // اسم المجلد في Cloudinary
-    resource_type: 'raw', // لدعم ملفات PDF
+  params: async (req, file) => {
+    let resourceType = 'raw';
+    if (file.mimetype.startsWith('image/')) {
+      resourceType = 'image';
+    } else if (file.mimetype.startsWith('video/')) {
+      resourceType = 'video';
+    }
+
+    return {
+      folder: 'uploads', // اسم المجلد العام في Cloudinary
+      resource_type: resourceType, // تحديد نوع الملف ديناميكيًا
+      format: file.mimetype.split('/')[1], // تحديد صيغة الملف بناءً على نوعه
+    };
   },
 });
 

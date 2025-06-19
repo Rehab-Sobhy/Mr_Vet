@@ -50,10 +50,17 @@ exports.getMaterials = async (req, res) => {
       return res.status(400).json({ message: '❌ معرف الكورس غير صالح' });
     }
 
-    // جلب المواد مع التأكد من أن الروابط هي روابط Cloudinary
+    // جلب المواد مع تعديل الروابط لتكون inline
     const materials = await Material.find({ courseId }).select('fileUrl title description');
 
-    res.status(200).json({ materials });
+    const updatedMaterials = materials.map((material) => {
+      return {
+        ...material._doc,
+        fileUrl: `${material.fileUrl}?content-disposition=inline`,
+      };
+    });
+
+    res.status(200).json({ materials: updatedMaterials });
   } catch (error) {
     res.status(500).json({ message: '❌ فشل في جلب المواد', error: error.message });
   }

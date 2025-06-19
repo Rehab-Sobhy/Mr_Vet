@@ -9,6 +9,12 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+console.log('Cloudinary configuration:', {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET ? 'HIDDEN' : 'NOT SET',
+});
+
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
@@ -18,6 +24,13 @@ const storage = new CloudinaryStorage({
     } else if (file.mimetype.startsWith('video/')) {
       resourceType = 'video';
     }
+
+    console.log('Uploading file with params:', {
+      folder: 'uploads',
+      resource_type: resourceType,
+      format: file.mimetype.split('/')[1],
+      access_mode: 'public',
+    });
 
     return {
       folder: 'uploads', // اسم المجلد العام في Cloudinary

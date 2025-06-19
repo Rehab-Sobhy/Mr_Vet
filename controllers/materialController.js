@@ -27,8 +27,8 @@ exports.uploadMaterial = async (req, res) => {
       return res.status(400).json({ message: '❌ يجب رفع ملف' });
     }
 
-    // استخدام رابط Cloudinary كـ File URL
-    const fileUrl = req.file.path;
+    // استخدم secure_url من Cloudinary (multer-storage-cloudinary يضعه في path)
+    const fileUrl = req.file.path || req.file.secure_url;
 
     const material = await Material.create({
       courseId,
@@ -51,18 +51,9 @@ exports.getMaterials = async (req, res) => {
       return res.status(400).json({ message: '❌ معرف الكورس غير صالح' });
     }
 
-    // جلب المواد من قاعدة البيانات
-    const materials = await Material.find({ courseId }).select('fileUrl title description');
-
-    // إنشاء روابط موقعة للملفات
-    const updatedMaterials = materials.map((material) => {
-      return {
-        ...material._doc,
-        fileUrl: material.fileUrl, // استخدام الرابط العام مباشرة بدون توقيع
-      };
-    });
-
-    res.status(200).json({ materials: updatedMaterials });
+    const materials = await Material.find({ courseId });
+    // أرجع كل شيء كما هو، خاصة fileUrl
+    res.status(200).json({ materials });
   } catch (error) {
     res.status(500).json({ message: '❌ فشل في جلب المواد', error: error.message });
   }

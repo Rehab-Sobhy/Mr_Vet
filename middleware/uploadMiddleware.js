@@ -1,5 +1,6 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 // إعداد التخزين المحلي بناءً على نوع الملف
 const storage = multer.diskStorage({
@@ -11,6 +12,10 @@ const storage = multer.diskStorage({
       dest = 'uploads/videos';
     } else if (file.mimetype === 'application/pdf') {
       dest = 'uploads/pdfs';
+    }
+    // إنشاء المجلد إذا لم يكن موجودًا
+    if (!fs.existsSync(dest)) {
+      fs.mkdirSync(dest, { recursive: true });
     }
     cb(null, dest);
   },

@@ -330,46 +330,63 @@ paths:
       responses:
         '200':
           description: إحصائيات
-
-  # COURSES
-  /courses:
+  /admin/subscriptions:
     get:
-      summary: جلب كل الكورسات
+      summary: جلب كل الاشتراكات مع بيانات الطالب والكورس (أدمن فقط)
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: قائمة الكورسات
-  /courses/upload:
+          description: قائمة الاشتراكات
     post:
-      summary: رفع كورس جديد (admin/instructor)
+      summary: إضافة اشتراك يدوي (studentId, courseId, startDate, endDate)
       security:
         - bearerAuth: []
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               properties:
-                courseName:
+                studentId:
                   type: string
-                price:
-                  type: number
-                instructorName:
+                courseId:
                   type: string
-                academicYear:
-                  type: integer
-                coverImage:
+                startDate:
                   type: string
-                  format: binary
-                sections:
+                  format: date
+                endDate:
                   type: string
-                  description: JSON array
+                  format: date
       responses:
         '201':
-          description: تم رفع الكورس
-  /courses/{id}/sections:
-    post:
-      summary: إضافة سيكشن جديد لكورس
+          description: تم إضافة الاشتراك
+  /admin/subscriptions/{id}:
+    delete:
+      summary: حذف اشتراك طالب من كورس (أدمن فقط)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: تم حذف الاشتراك
+  /admin/logs:
+    get:
+      summary: جلب سجل النشاطات الإدارية (log system)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: قائمة السجلات الإدارية
+  /admin/courses/{id}:
+    put:
+      summary: تعديل كورس (أدمن فقط)
       security:
         - bearerAuth: []
       parameters:
@@ -384,85 +401,22 @@ paths:
           application/json:
             schema:
               type: object
-              properties:
-                sectionType:
-                  type: string
-                sectionTitle:
-                  type: string
-                videos:
-                  type: string
-                  description: JSON array
       responses:
         '200':
-          description: تم إضافة السيكشن
-  /courses/filter/by-year:
-    get:
-      summary: فلترة الكورسات حسب السنة الدراسية
+          description: تم تعديل الكورس
+    delete:
+      summary: حذف كورس (أدمن فقط)
+      security:
+        - bearerAuth: []
       parameters:
-        - in: query
-          name: year
+        - in: path
+          name: id
           required: true
           schema:
-            type: integer
+            type: string
       responses:
         '200':
-          description: قائمة الكورسات
-
-  # NOTIFICATIONS
-  /notifications:
-    post:
-      summary: إنشاء إشعار جديد
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userId:
-                  type: string
-                title:
-                  type: string
-                message:
-                  type: string
-      responses:
-        '201':
-          description: تم إنشاء الإشعار
-  /notifications/my:
-    get:
-      summary: جلب إشعارات المستخدم الحالي
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: قائمة الإشعارات
-  /notifications/mark-as-read:
-    post:
-      summary: تعليم إشعار كمقروء
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                notificationId:
-                  type: string
-      responses:
-        '200':
-          description: تم التعليم
-  /notifications/mark-all-as-read:
-    post:
-      summary: تعليم كل الإشعارات كمقروءة
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: تم التعليم
+          description: تم حذف الكورس
 
 components:
   securitySchemes:

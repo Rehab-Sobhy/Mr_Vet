@@ -64,6 +64,18 @@
   - جلب إحصائيات عامة
 - **POST /admin/subscriptions/activate**
   - تفعيل اشتراك طالب في كورس (email أو userId + courseId)
+- **GET /admin/subscriptions**
+  - جلب كل الاشتراكات مع بيانات الطالب والكورس (أدمن فقط)
+- **POST /admin/subscriptions**
+  - إضافة اشتراك يدوي (studentId, courseId, startDate, endDate)
+- **DELETE /admin/subscriptions/:id**
+  - حذف اشتراك طالب من كورس
+- **GET /admin/logs**
+  - جلب سجل النشاطات الإدارية (log system)
+- **PUT /admin/courses/:id**
+  - تعديل كورس (أدمن فقط)
+- **DELETE /admin/courses/:id**
+  - حذف كورس (أدمن فقط)
 
 ### Notifications
 - **POST /notifications**

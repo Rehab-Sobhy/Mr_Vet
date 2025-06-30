@@ -18,47 +18,7 @@ router.put('/users/:id', checkAdmin, adminController.updateUser);
 router.delete('/users/:id', checkAdmin, adminController.deleteUser);
 
 // ✅ تفعيل الكورس للطالب
-router.post('/subscriptions/activate', checkAdmin, async (req, res) => {
-  try {
-    const { email, courseId } = req.body;
-
-    // التحقق من وجود المستخدم
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ msg: '❌ المستخدم غير موجود' });
-    }
-
-    // التحقق من وجود الكورس
-    const course = await Course.findById(courseId);
-    if (!course) {
-      return res.status(404).json({ msg: '❌ الكورس غير موجود' });
-    }
-
-    // التحقق إذا كان الاشتراك موجودًا بالفعل
-    const existingSubscription = await Subscription.findOne({ userId: user._id, courseId });
-    if (existingSubscription) {
-      return res.status(400).json({ msg: '❌ الطالب مشترك بالفعل في هذا الكورس' });
-    }
-
-    // إنشاء اشتراك جديد
-    const subscription = await Subscription.create({
-      userId: user._id,
-      courseId: course._id,
-      startDate: new Date(),
-      endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)), // اشتراك لمدة شهر
-    });
-
-    // إرسال بريد إلكتروني للطالب
-    const subject = 'تم تفعيل الكورس الخاص بك';
-    const text = `مرحبًا ${user.name},\n\nتم تفعيل الكورس "${course.title}" بنجاح. يمكنك الآن الوصول إلى محتوى الكورس.\n\nشكرًا لك!`;
-    await sendEmail(user.email, subject, text);
-
-    res.status(201).json({ msg: '✅ تم تفعيل الكورس بنجاح وتم إرسال بريد إلكتروني للطالب', subscription });
-  } catch (err) {
-    console.error('❌ Error activating subscription:', err);
-    res.status(500).json({ msg: '❌ حصلت مشكلة أثناء تفعيل الكورس', error: err.message });
-  }
-});
+router.post('/subscriptions/activate', checkAdmin, adminController.activateSubscription);
 
 // ✅ رفع الملفات (صور أو فيديوهات)
 router.post(
@@ -82,5 +42,17 @@ router.post('/approve-carnet', checkAdmin, require('../controllers/authControlle
 
 // ✅ رفض الكارنيه (أدمن فقط)
 router.post('/reject-carnet', checkAdmin, require('../controllers/authController').rejectCarnet);
+
+// إدارة الاشتراكات
+router.get('/subscriptions', checkAdmin, adminController.getAllSubscriptions);
+router.post('/subscriptions', checkAdmin, adminController.addSubscription);
+router.delete('/subscriptions/:id', checkAdmin, adminController.deleteSubscription);
+
+// سجل النشاطات الإدارية
+router.get('/logs', checkAdmin, adminController.getAdminLogs);
+
+// تعديل/حذف الكورسات (أدمن فقط)
+router.put('/courses/:id', checkAdmin, adminController.updateCourseByAdmin);
+router.delete('/courses/:id', checkAdmin, adminController.deleteCourseByAdmin);
 
 module.exports = router;

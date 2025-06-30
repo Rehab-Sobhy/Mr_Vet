@@ -6,18 +6,19 @@ const User = require('../models/User');
 const Course = require('../models/Course');
 const sendEmail = require('../utils/sendEmail'); // استدعاء وظيفة إرسال البريد الإلكتروني
 const upload = require('../middleware/uploadMiddleware'); // استدعاء Middleware رفع الملفات
+const checkAdmin = require('../middleware/checkAdmin');
 
 // ✅ عرض كل المستخدمين
-router.get('/users', adminController.getAllUsers);
+router.get('/users', checkAdmin, adminController.getAllUsers);
 
 // ✅ تعديل بيانات مستخدم
-router.put('/users/:id', adminController.updateUser);
+router.put('/users/:id', checkAdmin, adminController.updateUser);
 
 // ✅ حذف مستخدم
-router.delete('/users/:id', adminController.deleteUser);
+router.delete('/users/:id', checkAdmin, adminController.deleteUser);
 
 // ✅ تفعيل الكورس للطالب
-router.post('/subscriptions/activate', async (req, res) => {
+router.post('/subscriptions/activate', checkAdmin, async (req, res) => {
   try {
     const { email, courseId } = req.body;
 
@@ -62,11 +63,24 @@ router.post('/subscriptions/activate', async (req, res) => {
 // ✅ رفع الملفات (صور أو فيديوهات)
 router.post(
   '/upload',
+  checkAdmin,
   upload.fields([
     { name: 'thumbnail', maxCount: 1 }, // صورة مصغرة
     { name: 'video', maxCount: 1 }, // فيديو
   ]),
   adminController.uploadFile
 );
+
+// ✅ جلب إحصائيات عامة للوحة تحكم الأدمن
+router.get('/stats', checkAdmin, adminController.getStats);
+
+// ✅ إنشاء حساب معلم (أدمن فقط)
+router.post('/create-teacher', checkAdmin, upload.fields([{ name: 'profileImage', maxCount: 1 }]), adminController.createTeacher);
+
+// ✅ اعتماد الكارنيه (أدمن فقط)
+router.post('/approve-carnet', checkAdmin, require('../controllers/authController').approveCarnet);
+
+// ✅ رفض الكارنيه (أدمن فقط)
+router.post('/reject-carnet', checkAdmin, require('../controllers/authController').rejectCarnet);
 
 module.exports = router;

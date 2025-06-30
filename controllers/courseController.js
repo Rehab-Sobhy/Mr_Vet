@@ -245,3 +245,82 @@ exports.addSubjectToCourse = async (req, res) => {
     res.status(500).json({ message: '❌ حدث خطأ أثناء الإضافة', error: err.message });
   }
 };
+
+// ✅ رفع كورس جديد بالهيكلية الجديدة
+exports.uploadCourse = async (req, res) => {
+  try {
+    const { courseName, price, instructorName, academicYear, sections } = req.body;
+    if (!courseName || !price || !instructorName || !academicYear) {
+      return res.status(400).json({ msg: '❌ كل الحقول مطلوبة (courseName, price, instructorName, academicYear)' });
+    }
+    let coverImage = null;
+    if (req.files && req.files['coverImage']) {
+      const img = req.files['coverImage'][0];
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+      if (!allowedTypes.includes(img.mimetype)) {
+        return res.status(400).json({ msg: '❌ نوع صورة الغلاف غير مدعوم (jpg, jpeg, png فقط)' });
+      }
+      if (img.size > 2 * 1024 * 1024) {
+        return res.status(400).json({ msg: '❌ حجم صورة الغلاف يجب ألا يتجاوز 2 ميجابايت' });
+      }
+      coverImage = img.path;
+    }
+    let parsedSections = [];
+    if (sections) {
+      try {
+        parsedSections = JSON.parse(sections);
+      } catch (e) {
+        return res.status(400).json({ msg: '❌ sections يجب أن تكون JSON' });
+      }
+    }
+    const course = await Course.create({
+      courseName,
+      price,
+      instructorName,
+      academicYear,
+      coverImage,
+      sections: parsedSections
+    });
+    res.status(201).json({ msg: '✅ تم رفع الكورس بنجاح', course });
+  } catch (err) {
+    res.status(500).json({ msg: '❌ حدث خطأ أثناء رفع الكورس', error: err.message });
+  }
+};
+
+// ✅ إضافة سيكشن جديد لكورس
+exports.addSection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sectionType, sectionTitle, videos } = req.body;
+    if (!sectionType || !sectionTitle) {
+      return res.status(400).json({ msg: '❌ كل الحقول مطلوبة (sectionType, sectionTitle)' });
+    }
+    let parsedVideos = [];
+    if (videos) {
+      try {
+        parsedVideos = JSON.parse(videos);
+      } catch (e) {
+        return res.status(400).json({ msg: '❌ videos يجب أن تكون JSON' });
+      }
+    }
+    const course = await Course.findById(id);
+    if (!course) return res.status(404).json({ msg: '❌ الكورس غير موجود' });
+    course.sections.push({ sectionType, sectionTitle, videos: parsedVideos });
+    await course.save();
+    res.status(200).json({ msg: '✅ تم إضافة السيكشن بنجاح', course });
+  } catch (err) {
+    res.status(500).json({ msg: '❌ حدث خطأ أثناء إضافة السيكشن', error: err.message });
+  }
+};
+
+// ✅ فلترة الكورسات حسب السنة الدراسية
+exports.filterByYear = async (req, res) => {
+  try {
+    const { year } = req.query;
+    if (!year) return res.status(400).json({ msg: '❌ السنة الدراسية مطلوبة' });
+    const courses = await Course.find({ academicYear: Number(year) });
+    res.status(200).json({ msg: '✅ تم جلب الكورسات بنجاح', courses });
+  } catch (err) {
+    res.status(500).json({ msg: '❌ حدث خطأ أثناء الفلترة', error: err.message });
+  }
+};

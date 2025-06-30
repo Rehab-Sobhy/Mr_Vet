@@ -14,47 +14,47 @@ const generateToken = (userId, role) => {
   });
 };
 
-// إعداد التخزين للصور
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/profileImages'); // مسار حفظ الصور
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
+// إعداد التخزين للصور (لم يعد مطلوبًا رفع صورة شخصية)
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, 'uploads/profileImages'); // مسار حفظ الصور
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, `${Date.now()}-${file.originalname}`);
+//   },
+// });
 
-// التحقق من نوع الملف
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('❌ نوع الملف غير مدعوم. يجب أن يكون صورة.'));
-  }
-};
+// التحقق من نوع الملف (لم يعد مطلوبًا رفع صورة شخصية)
+// const fileFilter = (req, file, cb) => {
+//   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+//   if (allowedTypes.includes(file.mimetype)) {
+//     cb(null, true);
+//   } else {
+//     cb(new Error('❌ نوع الملف غير مدعوم. يجب أن يكون صورة.'));
+//   }
+// };
 
-const upload = multer({ storage, fileFilter });
+const upload = multer({ /* storage, fileFilter */ });
 
 exports.uploadMiddleware = upload.fields([
-  { name: 'profileImage', maxCount: 1 },
+  // { name: 'profileImage', maxCount: 1 }, // تم حذف رفع صورة الملف الشخصي
   { name: 'collegeId', maxCount: 1 },
 ]);
 
 // ✅ تسجيل مستخدم جديد
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, phone, academicYear } = req.body;
 
     // التحقق من البيانات
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ msg: "❌ كل الحقول مطلوبة" });
+    if (!name || !email || !password || !role || !phone || !academicYear) {
+      return res.status(400).json({ msg: "❌ كل الحقول مطلوبة (الاسم، الإيميل، كلمة المرور، الدور، رقم الهاتف، السنة الدراسية)" });
     }
 
-    // التحقق إذا كان الإيميل مستخدم قبل كده
-    const existingUser = await User.findOne({ email });
+    // التحقق إذا كان الإيميل أو رقم الهاتف مستخدم من قبل
+    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
     if (existingUser) {
-      return res.status(400).json({ msg: "❌ الإيميل مستخدم بالفعل" });
+      return res.status(400).json({ msg: "❌ الإيميل أو رقم الهاتف مستخدم بالفعل" });
     }
 
     // التحقق من رفع صورة الكارنيه
@@ -62,14 +62,25 @@ exports.register = async (req, res) => {
       return res.status(400).json({ msg: "❌ صورة الكارنيه مطلوبة" });
     }
 
+    // التحقق من نوع وحجم وأبعاد صورة الكارنيه
+    const carnetFile = req.files['collegeId'][0];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(carnetFile.mimetype)) {
+      return res.status(400).json({ msg: "❌ نوع صورة الكارنيه غير مدعوم (فقط jpg, jpeg, png)" });
+    }
+    if (carnetFile.size > 2 * 1024 * 1024) {
+      return res.status(400).json({ msg: "❌ حجم صورة الكارنيه يجب ألا يتجاوز 2 ميجابايت" });
+    }
+    // يمكن إضافة فحص الأبعاد لاحقًا باستخدام مكتبة sharp أو jimp
+
     // تشفير كلمة المرور
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // إعداد الصور
-    const profileImage = req.files['profileImage']
-      ? req.files['profileImage'][0].path
-      : null;
-    const collegeId = req.files['collegeId'][0].path;
+    // const profileImage = req.files['profileImage']
+    //   ? req.files['profileImage'][0].path
+    //   : null;
+    const collegeId = carnetFile.path;
 
     // إنشاء المستخدم
     const user = await User.create({
@@ -77,8 +88,10 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       role,
-      profileImage,
+      phone,
+      academicYear,
       collegeId,
+      carnetStatus: 'pending', // الحالة الافتراضية للكارنيه
     });
 
     // إنشاء التوكن
@@ -124,7 +137,16 @@ exports.login = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.status(200).json({ token, user });
+    res.status(200).json({
+      msg: "Login successful",
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (err) {
     console.error("❌ Error during login:", err);
     res.status(500).json({ msg: "❌ حصلت مشكلة أثناء تسجيل الدخول", error: err.message });
@@ -184,5 +206,86 @@ exports.logout = async (req, res) => {
     res.status(200).json({ message: '✅ تم تسجيل الخروج بنجاح' });
   } catch (err) {
     res.status(500).json({ message: '❌ حدث خطأ أثناء تسجيل الخروج', error: err.message });
+  }
+};
+
+// ✅ تسجيل معلم جديد (Admin Only)
+exports.createTeacher = async (req, res) => {
+  try {
+    const { name, email, password, phone, academicYear } = req.body;
+    // تحقق من الصلاحيات (يجب أن يكون الأدمن)
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: '❌ غير مصرح لك' });
+    }
+    if (!name || !email || !password || !phone || !academicYear) {
+      return res.status(400).json({ message: '❌ كل الحقول مطلوبة' });
+    }
+    // تحقق من عدم وجود إيميل مكرر
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: '❌ الإيميل مستخدم بالفعل' });
+    }
+    // تحقق من صحة رقم الهاتف (مصري)
+    const egyptPhoneRegex = /^01[0-2,5]{1}[0-9]{8}$/;
+    if (!egyptPhoneRegex.test(phone)) {
+      return res.status(400).json({ message: '❌ رقم الهاتف غير صحيح' });
+    }
+    // تشفير كلمة السر
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // إنشاء المعلم
+    const teacher = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      academicYear,
+      role: 'teacher'
+      // profileImage: req.file ? req.file.path : undefined // تم حذف صورة الملف الشخصي
+    });
+    res.status(201).json({ message: '✅ تم إنشاء حساب المعلم بنجاح', teacher });
+  } catch (error) {
+    res.status(500).json({ message: '❌ فشل في إنشاء حساب المعلم', error: error.message });
+  }
+};
+
+// ✅ رفض الكارنيه (أدمن فقط)
+exports.rejectCarnet = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ message: '❌ userId مطلوب' });
+    }
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { carnetStatus: 'rejected' },
+      { new: true }
+    ).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: '❌ المستخدم غير موجود' });
+    }
+    res.status(200).json({ message: '✅ تم رفض الكارنيه بنجاح', user });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء الرفض', error: err.message });
+  }
+};
+
+// ✅ اعتماد الكارنيه (أدمن فقط)
+exports.approveCarnet = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ message: '❌ userId مطلوب' });
+    }
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { carnetStatus: 'approved' },
+      { new: true }
+    ).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: '❌ المستخدم غير موجود' });
+    }
+    res.status(200).json({ message: '✅ تم اعتماد الكارنيه بنجاح', user });
+  } catch (err) {
+    res.status(500).json({ message: '❌ حدث خطأ أثناء الاعتماد', error: err.message });
   }
 };

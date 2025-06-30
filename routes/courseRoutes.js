@@ -75,4 +75,24 @@ router.delete(
   courseController.deleteCourse
 );
 
+// ✅ رفع كورس جديد بالهيكلية الجديدة
+router.post(
+  '/upload',
+  authMiddleware,
+  roleMiddleware(['admin', 'instructor']),
+  upload.fields([{ name: 'coverImage', maxCount: 1 }]),
+  courseController.uploadCourse
+);
+
+// ✅ إضافة سيكشن جديد لكورس
+router.post(
+  '/:id/sections',
+  authMiddleware,
+  roleMiddleware(['admin', 'instructor']),
+  courseController.addSection
+);
+
+// ✅ فلترة الكورسات حسب السنة الدراسية
+router.get('/filter/by-year', courseController.filterByYear);
+
 module.exports = router;

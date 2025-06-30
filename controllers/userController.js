@@ -30,7 +30,7 @@ exports.getAllInstructors = async (req, res) => {
 // ✅ تسجيل مستخدم جديد
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role, profileImage } = req.body;
+    const { name, email, password, role } = req.body;
 
     // التحقق من البيانات
     if (!name || !email || !password || !role) {
@@ -47,7 +47,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // إنشاء المستخدم
-    const user = await User.create({ name, email, password: hashedPassword, role, profileImage });
+    const user = await User.create({ name, email, password: hashedPassword, role });
 
     // إنشاء التوكن
     const token = jwt.sign(
@@ -60,33 +60,6 @@ exports.register = async (req, res) => {
   } catch (err) {
     console.error('❌ Error during registration:', err);
     res.status(500).json({ msg: '❌ حصلت مشكلة أثناء التسجيل', error: err.message });
-  }
-};
-
-// ✅ رفع صورة الملف الشخصي (تم التصحيح هنا)
-exports.uploadProfileImage = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    if (!req.file) {
-      return res.status(400).json({ msg: '❌ يجب رفع صورة' });
-    }
-
-    // حفظ المسار المحلي للصورة
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { profileImage: `/uploads/images/${req.file.filename}` },
-      { new: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({ msg: '❌ المستخدم غير موجود' });
-    }
-
-    res.status(200).json({ msg: '✅ تم رفع الصورة بنجاح', user });
-  } catch (err) {
-    console.error('❌ Error uploading profile image:', err);
-    res.status(500).json({ msg: '❌ حصلت مشكلة أثناء رفع الصورة', error: err.message });
   }
 };
 
@@ -193,5 +166,43 @@ exports.updateMyAccount = async (req, res) => {
     res.status(200).json({ msg: '✅ تم تحديث الحساب بنجاح', user });
   } catch (err) {
     res.status(500).json({ msg: '❌ فشل في تحديث الحساب', error: err.message });
+  }
+};
+
+// ✅ رفع الكارنيه مع فحص الصورة
+exports.uploadCarnet = async (req, res) => {
+  try {
+    if (!req.files || !req.files['collegeId']) {
+      return res.status(400).json({ msg: "❌ صورة الكارنيه مطلوبة" });
+    }
+    const carnetFile = req.files['collegeId'][0];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(carnetFile.mimetype)) {
+      return res.status(400).json({ msg: "❌ نوع صورة الكارنيه غير مدعوم (فقط jpg, jpeg, png)" });
+    }
+    if (carnetFile.size > 2 * 1024 * 1024) {
+      return res.status(400).json({ msg: "❌ حجم صورة الكارنيه يجب ألا يتجاوز 2 ميجابايت" });
+    }
+    // يمكن إضافة فحص الأبعاد لاحقًا
+    // تحديث بيانات المستخدم
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { collegeId: carnetFile.path, carnetStatus: 'pending' },
+      { new: true }
+    ).select('-password');
+    res.status(200).json({ msg: "✅ تم رفع الكارنيه بنجاح وجاري المراجعة", user });
+  } catch (err) {
+    res.status(500).json({ msg: "❌ حدث خطأ أثناء رفع الكارنيه", error: err.message });
+  }
+};
+
+// ✅ تسجيل الخروج (إبطال التوكن)
+exports.logout = async (req, res) => {
+  try {
+    // في حالة JWT: إبطال التوكن يكون من جهة العميل (حذفه من التخزين)
+    // يمكن إضافة قائمة سوداء للتوكنات في قاعدة البيانات إذا أردت حماية أقوى
+    res.status(200).json({ msg: '✅ تم تسجيل الخروج بنجاح. الرجاء حذف التوكن من جهازك.' });
+  } catch (err) {
+    res.status(500).json({ msg: '❌ حدث خطأ أثناء تسجيل الخروج', error: err.message });
   }
 };

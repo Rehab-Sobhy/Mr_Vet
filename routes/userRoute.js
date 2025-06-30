@@ -17,9 +17,6 @@ router.put('/:id', authMiddleware, userController.updateUser);
 // ✅ حذف مستخدم
 router.delete('/:id', authMiddleware, roleMiddleware(['admin']), userController.deleteUser);
 
-// ✅ رفع صورة الملف الشخصي
-router.post('/profile/upload', authMiddleware, upload.single('profileImage'), userController.uploadProfileImage);
-
 // ✅ جلب كل أسماء المحاضرين
 router.get('/instructors', userController.getAllInstructors);
 
@@ -39,13 +36,24 @@ router.get('/me', authMiddleware, async (req, res) => {
 // جلب كل الإنستراكتورز مع بروفايل كامل والكورسات
 router.get('/instructors-with-courses', userController.getInstructorsWithCourses);
 
-// حذف حساب المستخدم بنفسه
-router.delete('/me', authMiddleware, userController.deleteMyAccount);
+// ✅ حذف الحساب (للمستخدم نفسه)
+router.delete('/delete-account', authMiddleware, userController.deleteMyAccount);
 
 // تحديث بيانات حساب المستخدم (يدعم form-data لرفع صورة شخصية وصورة كارنيه)
 router.put('/me', authMiddleware, upload.fields([
   { name: 'profileImage', maxCount: 1 },
   { name: 'collegeId', maxCount: 1 }
 ]), userController.updateMyAccount);
+
+// ✅ رفع الكارنيه
+router.post(
+  '/upload-carnet',
+  authMiddleware,
+  upload.fields([{ name: 'collegeId', maxCount: 1 }]),
+  userController.uploadCarnet
+);
+
+// ✅ تسجيل الخروج (إبطال التوكن)
+router.post('/logout', authMiddleware, userController.logout);
 
 module.exports = router;

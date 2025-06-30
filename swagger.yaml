@@ -1,0 +1,472 @@
+openapi: 3.0.0
+info:
+  title: E-Learning Platform API
+  version: 1.0.0
+  description: |
+    توثيق جميع الـ endpoints الخاصة بمنصة التعليم الإلكتروني (Node.js/Express/MongoDB)
+    
+    **جميع المسارات المحمية تتطلب JWT في الهيدر Authorization: Bearer TOKEN**
+
+servers:
+  - url: http://localhost:5000
+
+paths:
+  # AUTH
+  /auth/register:
+    post:
+      summary: تسجيل مستخدم جديد (طالب)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [student, teacher]
+                phone:
+                  type: string
+                academicYear:
+                  type: integer
+                collegeId:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: تم إنشاء المستخدم
+  /auth/login:
+    post:
+      summary: تسجيل الدخول
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: تسجيل دخول ناجح
+  /auth/logout:
+    post:
+      summary: تسجيل الخروج
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: تم تسجيل الخروج
+  /auth/forgot-password:
+    post:
+      summary: إرسال رابط إعادة تعيين كلمة السر
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: تم إرسال رابط إعادة التعيين
+  /auth/reset-password:
+    post:
+      summary: إعادة تعيين كلمة السر
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resetToken:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: تم إعادة تعيين كلمة السر
+
+  # USER
+  /user:
+    get:
+      summary: جلب كل المستخدمين (أدمن فقط)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: قائمة المستخدمين
+  /user/register:
+    post:
+      summary: تسجيل مستخدم جديد (بدون carnet)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [student, teacher]
+      responses:
+        '201':
+          description: تم إنشاء المستخدم
+  /user/{id}:
+    put:
+      summary: تحديث بيانات مستخدم (أدمن أو المستخدم نفسه)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: تم التحديث
+    delete:
+      summary: حذف مستخدم (أدمن فقط)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: تم الحذف
+  /user/delete-account:
+    delete:
+      summary: حذف الحساب (المستخدم نفسه)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: تم حذف الحساب
+  /user/me:
+    get:
+      summary: جلب بيانات المستخدم الحالي
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: بيانات المستخدم
+  /user/instructors:
+    get:
+      summary: جلب كل أسماء المحاضرين
+      responses:
+        '200':
+          description: قائمة المحاضرين
+  /user/instructors-with-courses:
+    get:
+      summary: جلب المحاضرين مع الكورسات
+      responses:
+        '200':
+          description: قائمة المحاضرين مع الكورسات
+  /user/upload-carnet:
+    post:
+      summary: رفع الكارنيه مع فحص الصورة
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                collegeId:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: تم رفع الكارنيه
+  /user/logout:
+    post:
+      summary: تسجيل الخروج
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: تم تسجيل الخروج
+
+  # ADMIN
+  /admin/users:
+    get:
+      summary: جلب كل المستخدمين (أدمن فقط)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: قائمة المستخدمين
+  /admin/users/{id}:
+    put:
+      summary: تحديث بيانات مستخدم (أدمن فقط)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: تم التحديث
+    delete:
+      summary: حذف مستخدم (أدمن فقط)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: تم الحذف
+  /admin/create-teacher:
+    post:
+      summary: إنشاء حساب معلم (أدمن فقط)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                phone:
+                  type: string
+                academicYear:
+                  type: integer
+                profileImage:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: تم إنشاء المعلم (مع أو بدون صورة)
+  /admin/approve-carnet:
+    post:
+      summary: اعتماد الكارنيه (أدمن فقط)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: تم الاعتماد
+  /admin/reject-carnet:
+    post:
+      summary: رفض الكارنيه (أدمن فقط)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: تم الرفض
+  /admin/stats:
+    get:
+      summary: جلب إحصائيات عامة للوحة تحكم الأدمن
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: إحصائيات
+
+  # COURSES
+  /courses:
+    get:
+      summary: جلب كل الكورسات
+      responses:
+        '200':
+          description: قائمة الكورسات
+  /courses/upload:
+    post:
+      summary: رفع كورس جديد (admin/instructor)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                courseName:
+                  type: string
+                price:
+                  type: number
+                instructorName:
+                  type: string
+                academicYear:
+                  type: integer
+                coverImage:
+                  type: string
+                  format: binary
+                sections:
+                  type: string
+                  description: JSON array
+      responses:
+        '201':
+          description: تم رفع الكورس
+  /courses/{id}/sections:
+    post:
+      summary: إضافة سيكشن جديد لكورس
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sectionType:
+                  type: string
+                sectionTitle:
+                  type: string
+                videos:
+                  type: string
+                  description: JSON array
+      responses:
+        '200':
+          description: تم إضافة السيكشن
+  /courses/filter/by-year:
+    get:
+      summary: فلترة الكورسات حسب السنة الدراسية
+      parameters:
+        - in: query
+          name: year
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: قائمة الكورسات
+
+  # NOTIFICATIONS
+  /notifications:
+    post:
+      summary: إنشاء إشعار جديد
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                title:
+                  type: string
+                message:
+                  type: string
+      responses:
+        '201':
+          description: تم إنشاء الإشعار
+  /notifications/my:
+    get:
+      summary: جلب إشعارات المستخدم الحالي
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: قائمة الإشعارات
+  /notifications/mark-as-read:
+    post:
+      summary: تعليم إشعار كمقروء
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notificationId:
+                  type: string
+      responses:
+        '200':
+          description: تم التعليم
+  /notifications/mark-all-as-read:
+    post:
+      summary: تعليم كل الإشعارات كمقروءة
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: تم التعليم
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -5,7 +5,12 @@ const Subscription = require('../models/Subscription');
 // ✅ جلب كل الكورسات
 exports.getAllCourses = async (req, res) => {
   try {
-    const courses = await Course.find().populate('videos');
+    // دعم الفلترة حسب التصنيف (category) إذا تم تمريره في الكويري
+    const filter = {};
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
+    const courses = await Course.find(filter);
     res.status(200).json(courses);
   } catch (err) {
     console.error("❌ Error fetching courses:", err);
@@ -16,7 +21,7 @@ exports.getAllCourses = async (req, res) => {
 // ✅ جلب كورس معين بالـ ID
 exports.getCourseById = async (req, res) => {
   try {
-    const course = await Course.findById(req.params.id).populate('videos');
+    const course = await Course.findById(req.params.id);
     if (!course) {
       return res.status(404).json({ error: '❌ الكورس غير موجود' });
     }
@@ -43,44 +48,29 @@ exports.getInstructorCourses = async (req, res) => {
 // ✅ إنشاء كورس جديد مع رفع صورة وفيديوهات
 exports.createCourse = async (req, res) => {
   try {
-    const { title, description, price, category } = req.body;
-
-    if (!title || !description || !price || !category) {
-      return res.status(400).json({ error: '❌ يرجى ملء جميع الحقول المطلوبة: title, description, price, category' });
+    const { courseName, price, instructorName, academicYear, category, sections } = req.body;
+    if (!courseName || !price || !instructorName || !academicYear || !category) {
+      return res.status(400).json({ error: '❌ يرجى ملء جميع الحقول المطلوبة: courseName, price, instructorName, academicYear, category' });
     }
-
-    const courseImage = req.files['courseImage'] ? req.files['courseImage'][0].path : null;
-
-    // 1. أنشئ الكورس أولاً بدون فيديوهات
-    const course = new Course({
-      title,
-      description,
-      price,
-      category,
-      courseImage,
-      videos: [],
-      instructor: req.user._id,
-    });
-    await course.save();
-
-    // 2. أنشئ الفيديوهات واربطها بالكورس
-    const videoIds = [];
-    if (req.files['videos']) {
-      for (const file of req.files['videos']) {
-        const video = new Video({
-          title: file.originalname,
-          videoPath: file.path,
-          courseId: course._id // هنا بنحط الـ id الصحيح
-        });
-        await video.save();
-        videoIds.push(video._id);
+    const coverImage = req.files && req.files['coverImage'] ? req.files['coverImage'][0].path : undefined;
+    let parsedSections = [];
+    if (sections) {
+      try {
+        parsedSections = typeof sections === 'string' ? JSON.parse(sections) : sections;
+      } catch (e) {
+        return res.status(400).json({ error: '❌ sections يجب أن تكون Array أو JSON صحيح' });
       }
     }
-
-    // 3. حدث الكورس وضيف الفيديوهات
-    course.videos = videoIds;
+    const course = new Course({
+      courseName,
+      price,
+      instructorName,
+      academicYear,
+      category,
+      coverImage,
+      sections: parsedSections
+    });
     await course.save();
-
     res.status(201).json({ message: '✅ تم إنشاء الكورس بنجاح!', course });
   } catch (err) {
     console.error("❌ Error creating course:", err);
@@ -181,15 +171,25 @@ exports.updateCourse = async (req, res) => {
     const { courseId } = req.params;
     const updates = {};
 
-    // اجمع البيانات النصية من form-data
-    if (req.body.title) updates.title = req.body.title;
-    if (req.body.description) updates.description = req.body.description;
+    // تحديث الحقول الجديدة حسب الموديل
+    if (req.body.courseName) updates.courseName = req.body.courseName;
     if (req.body.price) updates.price = req.body.price;
+    if (req.body.instructorName) updates.instructorName = req.body.instructorName;
+    if (req.body.academicYear) updates.academicYear = req.body.academicYear;
     if (req.body.category) updates.category = req.body.category;
+
+    // تحديث sections إذا تم إرسالها (كـ JSON أو Array)
+    if (req.body.sections) {
+      try {
+        updates.sections = typeof req.body.sections === 'string' ? JSON.parse(req.body.sections) : req.body.sections;
+      } catch (e) {
+        return res.status(400).json({ msg: '❌ sections يجب أن تكون Array أو JSON صحيح' });
+      }
+    }
 
     // لو فيه صورة جديدة
     if (req.file) {
-      updates.courseImage = `/uploads/${req.file.filename}`;
+      updates.coverImage = req.file.path;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -249,9 +249,9 @@ exports.addSubjectToCourse = async (req, res) => {
 // ✅ رفع كورس جديد بالهيكلية الجديدة
 exports.uploadCourse = async (req, res) => {
   try {
-    const { courseName, price, instructorName, academicYear, sections } = req.body;
-    if (!courseName || !price || !instructorName || !academicYear) {
-      return res.status(400).json({ msg: '❌ كل الحقول مطلوبة (courseName, price, instructorName, academicYear)' });
+    const { courseName, price, instructorName, academicYear, category, sections } = req.body;
+    if (!courseName || !price || !instructorName || !academicYear || !category) {
+      return res.status(400).json({ msg: '❌ كل الحقول مطلوبة (courseName, price, instructorName, academicYear, category)' });
     }
     let coverImage = null;
     if (req.files && req.files['coverImage']) {
@@ -268,9 +268,9 @@ exports.uploadCourse = async (req, res) => {
     let parsedSections = [];
     if (sections) {
       try {
-        parsedSections = JSON.parse(sections);
+        parsedSections = typeof sections === 'string' ? JSON.parse(sections) : sections;
       } catch (e) {
-        return res.status(400).json({ msg: '❌ sections يجب أن تكون JSON' });
+        return res.status(400).json({ msg: '❌ sections يجب أن تكون Array أو JSON صحيح' });
       }
     }
     const course = await Course.create({
@@ -278,6 +278,7 @@ exports.uploadCourse = async (req, res) => {
       price,
       instructorName,
       academicYear,
+      category,
       coverImage,
       sections: parsedSections
     });
@@ -316,9 +317,11 @@ exports.addSection = async (req, res) => {
 // ✅ فلترة الكورسات حسب السنة الدراسية
 exports.filterByYear = async (req, res) => {
   try {
-    const { year } = req.query;
+    const { year, category } = req.query;
     if (!year) return res.status(400).json({ msg: '❌ السنة الدراسية مطلوبة' });
-    const courses = await Course.find({ academicYear: Number(year) });
+    const filter = { academicYear: Number(year) };
+    if (category) filter.category = category;
+    const courses = await Course.find(filter);
     res.status(200).json({ msg: '✅ تم جلب الكورسات بنجاح', courses });
   } catch (err) {
     res.status(500).json({ msg: '❌ حدث خطأ أثناء الفلترة', error: err.message });

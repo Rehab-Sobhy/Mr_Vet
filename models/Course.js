@@ -12,6 +12,7 @@ const courseSchema = new mongoose.Schema({
   instructorName: { type: String, required: true },
   coverImage: { type: String },
   academicYear: { type: Number, required: true },
+  category: { type: String, enum: ['general', 'credit'], required: true }, // عام أو برامج
   sections: [sectionSchema]
 });
 

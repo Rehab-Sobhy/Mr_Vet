@@ -11,8 +11,21 @@ const cors = require('cors');
 const helmet = require('helmet');
 const fs = require('fs');
 
-// تفعيل CORS
-app.use(cors());
+// تفعيل CORS مع السماح للداشبورد وأي دومين آخر (ويب أو موبايل)
+app.use(cors({
+  origin: function (origin, callback) {
+    // السماح للداشبورد بشكل صريح وأي origin آخر (للموبايل وغيره)
+    const dashboard = 'https://manegmentvett-zeta.vercel.app';
+    if (!origin || origin === dashboard) {
+      return callback(null, true);
+    }
+    // السماح لأي origin آخر (موبايل وغيره)
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-access-token', 'Origin', 'Accept'],
+}));
 // تفعيل Helmet
 app.use(helmet());
 

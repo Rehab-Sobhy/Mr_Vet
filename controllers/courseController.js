@@ -35,9 +35,19 @@ exports.getCourseById = async (req, res) => {
 // ✅ جلب الكورسات الخاصة بـ Instructor معين
 exports.getInstructorCourses = async (req, res) => {
   try {
-    const instructorId = req.user._id; // جلب ID المدرس من التوكن
-    const courses = await Course.find({ instructor: instructorId }).populate('videos');
-
+    let instructorName;
+    if (req.user.role === 'admin') {
+      // إذا أدمن: يمكنه جلب كورسات أي معلم عبر كويري ?name=...
+      instructorName = req.query.name;
+      if (!instructorName) {
+        return res.status(400).json({ message: 'يرجى تحديد اسم المعلم في الكويري ?name=...' });
+      }
+    } else if (req.user.role === 'teacher') {
+      instructorName = req.user.name;
+    } else {
+      return res.status(403).json({ message: '❌ غير مصرح لك' });
+    }
+    const courses = await Course.find({ instructorName }).populate('videos');
     res.status(200).json({ message: '✅ تم جلب الكورسات بنجاح', courses });
   } catch (err) {
     console.error("❌ Error fetching instructor's courses:", err);

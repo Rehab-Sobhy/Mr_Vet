@@ -20,7 +20,7 @@ exports.getAllUsers = async (req, res) => {
 // ✅ جلب كل أسماء المحاضرين
 exports.getAllInstructors = async (req, res) => {
   try {
-    const instructors = await User.find({ role: 'instructor' }).select('name email');
+    const instructors = await User.find({ role: 'teacher' }).select('name email');
     res.status(200).json({ instructors });
   } catch (err) {
     res.status(500).json({ message: '❌ حدث خطأ أثناء جلب المحاضرين', error: err.message });
@@ -47,15 +47,21 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // إنشاء المستخدم
-    const user = await User.create({ name, email, password: hashedPassword, role });
+    let carnetStatus = 'pending';
+    if (role !== 'student') carnetStatus = 'accepted';
+    const user = await User.create({ name, email, password: hashedPassword, role, carnetStatus });
 
-    // إنشاء التوكن
+    // إذا طالب: لا يتم إنشاء توكن إلا بعد اعتماد الكارنيه
+    if (role === 'student') {
+      return res.status(201).json({ msg: '✅ تم إنشاء الحساب بنجاح. يرجى رفع الكارنيه وانتظار الاعتماد من الإدارة.' });
+    }
+
+    // إذا معلم أو أدمن: إنشاء التوكن مباشرة
     const token = jwt.sign(
       { _id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
-
     res.status(201).json({ token, user });
   } catch (err) {
     console.error('❌ Error during registration:', err);
@@ -108,13 +114,14 @@ exports.deleteUser = async (req, res) => {
 // ✅ جلب المحاضرين مع الكورسات (بروفايل كامل)
 exports.getInstructorsWithCourses = async (req, res) => {
   try {
-    const instructors = await User.find({ role: 'instructor' })
-      .select('-password') // كل بيانات البروفايل ما عدا الباسورد
+    const instructors = await User.find({ role: 'teacher' })
+      .select('-password')
       .lean();
 
     const results = await Promise.all(
       instructors.map(async (inst) => {
-        const courses = await Course.find({ instructor: inst._id }).select('-__v');
+        // جلب الكورسات بناءً على instructorName = اسم المعلم
+        const courses = await Course.find({ instructorName: inst.name }).select('-__v');
         return { ...inst, courses };
       })
     );
@@ -148,7 +155,8 @@ exports.updateMyAccount = async (req, res) => {
 
     // إذا تم رفع صور
     if (req.files) {
-      if (req.files.profileImage && req.files.profileImage[0]) {
+      // فقط للمعلم أو الأدمن يسمح برفع صورة بروفايل
+      if (req.files.profileImage && req.files.profileImage[0] && req.user.role !== 'student') {
         updates.profileImage = req.files.profileImage[0].path.replace(/\\/g, '/');
       }
       if (req.files.collegeId && req.files.collegeId[0]) {
@@ -172,6 +180,11 @@ exports.updateMyAccount = async (req, res) => {
     if (updates.password) {
       const bcrypt = require('bcryptjs');
       updates.password = await bcrypt.hash(updates.password, 10);
+    }
+
+    // إذا طالب وعدل بياناته أو رفع كارنيه، يرجع الحساب معلق (pending) حتى الاعتماد
+    if (req.user.role === 'student') {
+      updates.carnetStatus = 'pending';
     }
 
     const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true });

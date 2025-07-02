@@ -9,7 +9,7 @@ const upload = require('../middleware/uploadMiddleware');
 router.get(
   '/my-courses',
   authMiddleware,
-  roleMiddleware(['instructor']),
+  roleMiddleware(['teacher']),
   courseController.getInstructorCourses
 );
 
@@ -31,7 +31,7 @@ router.get(
 router.delete(
   '/:courseId/videos/:videoId',
   authMiddleware,
-  roleMiddleware(['admin', 'instructor']),
+  roleMiddleware(['admin', 'teacher']),
   courseController.deleteVideoFromCourse
 );
 
@@ -42,7 +42,7 @@ router.get('/', courseController.getAllCourses);
 router.post(
   '/create',
   authMiddleware,
-  roleMiddleware(['admin', 'instructor']),
+  roleMiddleware(['admin', 'teacher']),
   upload.fields([
     { name: 'courseImage', maxCount: 1 }, // رفع صورة الكورس
     { name: 'videos' }, // رفع فيديوهات الكورس بدون حد أقصى

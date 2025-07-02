@@ -62,7 +62,7 @@ router.post(
 router.put(
   '/:courseId',
   authMiddleware,
-  roleMiddleware(['admin', 'instructor']),
+  roleMiddleware(['admin', 'teacher']),
   upload.single('courseImage'), // اسم الحقل المستخدم في form-data
   courseController.updateCourse
 );
@@ -71,7 +71,7 @@ router.put(
 router.delete(
   '/:id',
   authMiddleware,
-  roleMiddleware(['admin', 'instructor']),
+  roleMiddleware(['admin', 'teacher']),
   courseController.deleteCourse
 );
 
@@ -79,7 +79,7 @@ router.delete(
 router.post(
   '/upload',
   authMiddleware,
-  roleMiddleware(['admin', 'instructor']),
+  roleMiddleware(['admin', 'teacher']),
   upload.fields([{ name: 'coverImage', maxCount: 1 }]),
   courseController.uploadCourse
 );
@@ -88,7 +88,7 @@ router.post(
 router.post(
   '/:id/sections',
   authMiddleware,
-  roleMiddleware(['admin', 'instructor']),
+  roleMiddleware(['admin', 'teacher']),
   courseController.addSection
 );
 

@@ -102,8 +102,8 @@ exports.getStats = async (req, res) => {
 exports.createTeacher = async (req, res) => {
   try {
     const { name, email, password, phone, academicYear } = req.body;
-    if (!name || !email || !password || !phone || !academicYear) {
-      return res.status(400).json({ msg: '❌ كل الحقول مطلوبة (name, email, password, phone, academicYear)' });
+    if (!name || !email || !password || !phone) {
+      return res.status(400).json({ msg: '❌ كل الحقول مطلوبة (name, email, password, phone)' });
     }
     // تحقق من عدم وجود إيميل أو رقم هاتف مكرر
     const existing = await User.findOne({ $or: [{ email }, { phone }] });
@@ -124,7 +124,7 @@ exports.createTeacher = async (req, res) => {
       phone,
       academicYear,
       profileImage: profileImagePath,
-      carnetStatus: 'approved'
+      carnetStatus: 'accepted'
     });
     res.status(201).json({ msg: '✅ تم إنشاء حساب المعلم بنجاح', teacher });
   } catch (err) {

@@ -36,6 +36,7 @@ const videoRoutes = require('./routes/videoRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const authMiddleware = require('./middleware/authMiddleware');
 const playerRoutes = require('./routes/playerRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const materialRoutes = require('./routes/materialRoutes');
@@ -80,7 +81,7 @@ app.use('/api/courses', courseRoutes); // مسارات الكورسات
 app.use('/api/videos', videoRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/admin', adminRoutes); // مسارات الإدارة
+app.use('/api/admin', authMiddleware, adminRoutes); // مسارات الإدارة
 app.use('/api/materials', materialRoutes);
 app.use('/api/player', playerRoutes);
 app.use('/api/settings', settingsRoutes);

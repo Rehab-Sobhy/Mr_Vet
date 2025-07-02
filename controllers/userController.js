@@ -159,6 +159,21 @@ exports.updateMyAccount = async (req, res) => {
     if (!updates || Object.keys(updates).length === 0) {
       return res.status(400).json({ msg: '❌ لا يوجد بيانات لتحديثها' });
     }
+
+    // تحقق من تكرار الإيميل (إذا المستخدم يريد تغييره)
+    if (updates.email) {
+      const existing = await User.findOne({ email: updates.email, _id: { $ne: req.user._id } });
+      if (existing) {
+        return res.status(400).json({ msg: '❌ الإيميل مستخدم بالفعل' });
+      }
+    }
+
+    // إذا المستخدم يريد تغيير كلمة السر، يتم تشفيرها
+    if (updates.password) {
+      const bcrypt = require('bcryptjs');
+      updates.password = await bcrypt.hash(updates.password, 10);
+    }
+
     const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true });
     if (!user) {
       return res.status(404).json({ msg: '❌ المستخدم غير موجود' });

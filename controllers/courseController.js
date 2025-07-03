@@ -1,3 +1,53 @@
+// ✅ تحديث سيكشن داخل كورس (إضافة/تعديل/حذف فيديوهات أو بيانات)
+exports.updateSection = async (req, res) => {
+  try {
+    const { courseId, sectionIndex } = req.params;
+    const { sectionType, sectionTitle, removeVideos } = req.body;
+    const course = await Course.findById(courseId);
+    if (!course) return res.status(404).json({ msg: '❌ الكورس غير موجود' });
+    if (!course.sections[sectionIndex]) return res.status(404).json({ msg: '❌ السيكشن غير موجود' });
+
+    // تحديث بيانات السيكشن
+    if (sectionType) course.sections[sectionIndex].sectionType = sectionType;
+    if (sectionTitle) course.sections[sectionIndex].sectionTitle = sectionTitle;
+
+    // إضافة فيديوهات جديدة
+    let newVideos = [];
+    if (req.files && req.files.length > 0) {
+      newVideos = req.files.map(f => `/uploads/videos/${f.filename}`);
+    }
+    // دعم إضافة روابط فيديوهات نصية أيضًا (اختياري)
+    if (req.body.videos) {
+      try {
+        const extraVideos = typeof req.body.videos === 'string' ? JSON.parse(req.body.videos) : req.body.videos;
+        newVideos = [...newVideos, ...extraVideos];
+      } catch (e) {
+        return res.status(400).json({ msg: '❌ videos يجب أن تكون Array أو JSON صحيح' });
+      }
+    }
+    if (newVideos.length > 0) {
+      // إذا كانت الفيديوهات القديمة عبارة عن مصفوفة من المسارات فقط
+      if (!Array.isArray(course.sections[sectionIndex].videos)) course.sections[sectionIndex].videos = [];
+      course.sections[sectionIndex].videos.push(...newVideos);
+    }
+
+    // حذف فيديوهات (لو تم إرسال مصفوفة removeVideos)
+    if (removeVideos) {
+      let removeArr = [];
+      try {
+        removeArr = typeof removeVideos === 'string' ? JSON.parse(removeVideos) : removeVideos;
+      } catch (e) {
+        return res.status(400).json({ msg: '❌ removeVideos يجب أن تكون Array أو JSON صحيح' });
+      }
+      course.sections[sectionIndex].videos = course.sections[sectionIndex].videos.filter(v => !removeArr.includes(v));
+    }
+
+    await course.save();
+    res.status(200).json({ msg: '✅ تم تحديث السيكشن بنجاح', section: course.sections[sectionIndex], course });
+  } catch (err) {
+    res.status(500).json({ msg: '❌ حدث خطأ أثناء تحديث السيكشن', error: err.message });
+  }
+};
 const Course = require('../models/Course');
 const User = require('../models/User');
 const Video = require('../models/Video');

@@ -9,6 +9,7 @@ const sectionSchema = new mongoose.Schema({
 const courseSchema = new mongoose.Schema({
   courseName: { type: String, required: true },
   price: { type: Number, default: 0 },
+  instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   instructorName: { type: String, required: true },
   coverImage: { type: String },
   academicYear: { type: Number, required: true },

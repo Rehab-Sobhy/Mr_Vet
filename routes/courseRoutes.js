@@ -85,10 +85,12 @@ router.post(
 );
 
 // ✅ إضافة سيكشن جديد لكورس
+// ✅ إضافة سيكشن جديد مع دعم رفع فيديوهات
 router.post(
   '/:id/sections',
   authMiddleware,
   roleMiddleware(['admin', 'teacher']),
+  upload.array('videos'), // استقبال أكثر من فيديو
   courseController.addSection
 );
 

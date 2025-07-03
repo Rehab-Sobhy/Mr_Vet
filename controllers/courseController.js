@@ -307,16 +307,23 @@ exports.uploadCourse = async (req, res) => {
 exports.addSection = async (req, res) => {
   try {
     const { id } = req.params;
-    const { sectionType, sectionTitle, videos } = req.body;
+    const { sectionType, sectionTitle } = req.body;
     if (!sectionType || !sectionTitle) {
       return res.status(400).json({ msg: '❌ كل الحقول مطلوبة (sectionType, sectionTitle)' });
     }
-    let parsedVideos = [];
-    if (videos) {
+    // جمع مسارات الفيديوهات المرفوعة
+    let videoFiles = [];
+    if (req.files && req.files.length > 0) {
+      videoFiles = req.files.map(f => `/uploads/videos/${f.filename}`);
+    }
+    // دعم إضافة روابط فيديوهات نصية أيضًا (اختياري)
+    let parsedVideos = videoFiles;
+    if (req.body.videos) {
       try {
-        parsedVideos = JSON.parse(videos);
+        const extraVideos = typeof req.body.videos === 'string' ? JSON.parse(req.body.videos) : req.body.videos;
+        parsedVideos = [...videoFiles, ...extraVideos];
       } catch (e) {
-        return res.status(400).json({ msg: '❌ videos يجب أن تكون JSON' });
+        return res.status(400).json({ msg: '❌ videos يجب أن تكون Array أو JSON صحيح' });
       }
     }
     const course = await Course.findById(id);

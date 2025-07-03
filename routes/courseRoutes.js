@@ -1,11 +1,3 @@
-// ✅ تحديث سيكشن داخل كورس (إضافة/تعديل/حذف فيديوهات أو بيانات)
-router.patch(
-  '/:courseId/sections/:sectionIndex',
-  authMiddleware,
-  roleMiddleware(['admin', 'teacher']),
-  upload.array('videos'),
-  courseController.updateSection
-);
 const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
@@ -104,5 +96,14 @@ router.post(
 
 // ✅ فلترة الكورسات حسب السنة الدراسية
 router.get('/filter/by-year', courseController.filterByYear);
+
+// ✅ تحديث سيكشن داخل كورس (إضافة/تعديل/حذف فيديوهات أو بيانات)
+router.patch(
+  '/:courseId/sections/:sectionIndex',
+  authMiddleware,
+  roleMiddleware(['admin', 'teacher']),
+  upload.array('videos'),
+  courseController.updateSection
+);
 
 module.exports = router;

@@ -50,7 +50,7 @@ exports.getInstructorCourses = async (req, res) => {
     } else {
       return res.status(403).json({ message: '❌ غير مصرح لك' });
     }
-    const courses = await Course.find(filter).populate('videos');
+    const courses = await Course.find(filter); // لا يوجد videos مباشرة في الكورس، الفيديوهات داخل السكاشن
     res.status(200).json({ message: '✅ تم جلب الكورسات بنجاح', courses });
   } catch (err) {
     console.error("❌ Error fetching instructor's courses:", err);

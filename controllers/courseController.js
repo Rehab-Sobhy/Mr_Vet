@@ -11,24 +11,33 @@ exports.updateSection = async (req, res) => {
     if (sectionType) course.sections[sectionIndex].sectionType = sectionType;
     if (sectionTitle) course.sections[sectionIndex].sectionTitle = sectionTitle;
 
-    // إضافة فيديوهات جديدة
-    let newVideos = [];
+    // إضافة فيديوهات جديدة كمصفوفة من Objects {title, videoUrl}
+    let newVideoObjects = [];
     if (req.files && req.files.length > 0) {
-      newVideos = req.files.map(f => `/uploads/videos/${f.filename}`);
+      newVideoObjects = req.files.map(f => ({
+        title: f.originalname || f.filename,
+        videoUrl: `/uploads/videos/${f.filename}`
+      }));
     }
-    // دعم إضافة روابط فيديوهات نصية أيضًا (اختياري)
     if (req.body.videos) {
       try {
-        const extraVideos = typeof req.body.videos === 'string' ? JSON.parse(req.body.videos) : req.body.videos;
-        newVideos = [...newVideos, ...extraVideos];
+        let extraVideos = typeof req.body.videos === 'string' ? JSON.parse(req.body.videos) : req.body.videos;
+        if (Array.isArray(extraVideos)) {
+          extraVideos.forEach(v => {
+            if (typeof v === 'string') {
+              newVideoObjects.push({ title: v, videoUrl: v });
+            } else if (typeof v === 'object' && v.videoUrl) {
+              newVideoObjects.push({ title: v.title || v.videoUrl, videoUrl: v.videoUrl });
+            }
+          });
+        }
       } catch (e) {
         return res.status(400).json({ msg: '❌ videos يجب أن تكون Array أو JSON صحيح' });
       }
     }
-    if (newVideos.length > 0) {
-      // إذا كانت الفيديوهات القديمة عبارة عن مصفوفة من المسارات فقط
+    if (newVideoObjects.length > 0) {
       if (!Array.isArray(course.sections[sectionIndex].videos)) course.sections[sectionIndex].videos = [];
-      course.sections[sectionIndex].videos.push(...newVideos);
+      course.sections[sectionIndex].videos.push(...newVideoObjects);
     }
 
     // حذف فيديوهات (لو تم إرسال مصفوفة removeVideos)
@@ -39,7 +48,9 @@ exports.updateSection = async (req, res) => {
       } catch (e) {
         return res.status(400).json({ msg: '❌ removeVideos يجب أن تكون Array أو JSON صحيح' });
       }
-      course.sections[sectionIndex].videos = course.sections[sectionIndex].videos.filter(v => !removeArr.includes(v));
+      course.sections[sectionIndex].videos = course.sections[sectionIndex].videos.filter(
+        v => !removeArr.includes(v.videoUrl)
+      );
     }
 
     await course.save();
@@ -329,15 +340,17 @@ exports.uploadCourse = async (req, res) => {
       }
       coverImage = img.path;
     }
+
     let parsedSections = [];
     if (sections) {
       try {
         parsedSections = typeof sections === 'string' ? JSON.parse(sections) : sections;
       } catch (e) {
-        return res.status(400).json({ msg: '❌ sections يجب أن تكون Array أو JSON صحيح' });
+        return res.status(400).json({ error: '❌ sections يجب أن تكون Array أو JSON صحيح' });
       }
     }
-    const course = await Course.create({
+
+    const course = new Course({
       courseName,
       price,
       instructor: req.user._id,
@@ -347,9 +360,11 @@ exports.uploadCourse = async (req, res) => {
       coverImage,
       sections: parsedSections
     });
-    res.status(201).json({ msg: '✅ تم رفع الكورس بنجاح', course });
+    await course.save();
+    res.status(201).json({ message: '✅ تم رفع الكورس بالهيكلية الجديدة بنجاح!', course });
   } catch (err) {
-    res.status(500).json({ msg: '❌ حدث خطأ أثناء رفع الكورس', error: err.message });
+    console.error("❌ Error uploading course:", err);
+    res.status(500).json({ error: `❌ حدث خطأ أثناء رفع الكورس: ${err.message}` });
   }
 };
 
@@ -361,24 +376,35 @@ exports.addSection = async (req, res) => {
     if (!sectionType || !sectionTitle) {
       return res.status(400).json({ msg: '❌ كل الحقول مطلوبة (sectionType, sectionTitle)' });
     }
-    // جمع مسارات الفيديوهات المرفوعة
-    let videoFiles = [];
+    // تجهيز الفيديوهات كمصفوفة من Objects {title, videoUrl}
+    let videoObjects = [];
+    // ملفات الفيديو المرفوعة
     if (req.files && req.files.length > 0) {
-      videoFiles = req.files.map(f => `/uploads/videos/${f.filename}`);
+      videoObjects = req.files.map(f => ({
+        title: f.originalname || f.filename,
+        videoUrl: `/uploads/videos/${f.filename}`
+      }));
     }
     // دعم إضافة روابط فيديوهات نصية أيضًا (اختياري)
-    let parsedVideos = videoFiles;
     if (req.body.videos) {
       try {
-        const extraVideos = typeof req.body.videos === 'string' ? JSON.parse(req.body.videos) : req.body.videos;
-        parsedVideos = [...videoFiles, ...extraVideos];
+        let extraVideos = typeof req.body.videos === 'string' ? JSON.parse(req.body.videos) : req.body.videos;
+        if (Array.isArray(extraVideos)) {
+          extraVideos.forEach(v => {
+            if (typeof v === 'string') {
+              videoObjects.push({ title: v, videoUrl: v });
+            } else if (typeof v === 'object' && v.videoUrl) {
+              videoObjects.push({ title: v.title || v.videoUrl, videoUrl: v.videoUrl });
+            }
+          });
+        }
       } catch (e) {
         return res.status(400).json({ msg: '❌ videos يجب أن تكون Array أو JSON صحيح' });
       }
     }
     const course = await Course.findById(id);
     if (!course) return res.status(404).json({ msg: '❌ الكورس غير موجود' });
-    course.sections.push({ sectionType, sectionTitle, videos: parsedVideos });
+    course.sections.push({ sectionType, sectionTitle, videos: videoObjects });
     await course.save();
     res.status(200).json({ msg: '✅ تم إضافة السيكشن بنجاح', course });
   } catch (err) {

@@ -62,7 +62,7 @@ exports.createCourse = async (req, res) => {
     if (!courseName || !price || !instructorName || !academicYear || !category) {
       return res.status(400).json({ error: '❌ يرجى ملء جميع الحقول المطلوبة: courseName, price, instructorName, academicYear, category' });
     }
-    const coverImage = req.files && req.files['coverImage'] ? req.files['coverImage'][0].path : undefined;
+    const coverImage = req.files && req.files['courseImage'] ? req.files['courseImage'][0].path : undefined;
     let parsedSections = [];
     if (sections) {
       try {

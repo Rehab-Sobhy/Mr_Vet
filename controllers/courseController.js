@@ -290,6 +290,7 @@ exports.uploadCourse = async (req, res) => {
     const course = await Course.create({
       courseName,
       price,
+      instructor: req.user._id,
       instructorName,
       academicYear,
       category,

@@ -136,12 +136,23 @@ exports.getInstructorsWithCourses = async (req, res) => {
 exports.deleteMyAccount = async (req, res) => {
   try {
     const userId = req.user._id;
+    const userRole = req.user.role;
+    // حذف الكورسات التي أنشأها المستخدم إذا كان معلم
+    if (userRole === 'teacher') {
+      await Course.deleteMany({ instructor: userId });
+    }
+    // حذف الاشتراكات المرتبطة بالمستخدم
+    const Subscription = require('../models/Subscription');
+    await Subscription.deleteMany({ user: userId });
+    // حذف الإشعارات المرتبطة بالمستخدم
+    const Notification = require('../models/Notification');
+    await Notification.deleteMany({ user: userId });
+    // حذف المستخدم نفسه
     const deleted = await User.findByIdAndDelete(userId);
     if (!deleted) {
       return res.status(404).json({ msg: "❌ المستخدم غير موجود أو تم حذفه بالفعل" });
     }
-    // يمكن هنا حذف بيانات مرتبطة أخرى لو أردت (كورساته، ملفاته...)
-    res.status(200).json({ msg: "✅ تم حذف الحساب بنجاح" });
+    res.status(200).json({ msg: "✅ تم حذف الحساب وجميع البيانات المرتبطة بنجاح" });
   } catch (err) {
     res.status(500).json({ msg: "❌ فشل في حذف الحساب", error: err.message });
   }
@@ -201,25 +212,32 @@ exports.updateMyAccount = async (req, res) => {
 exports.uploadCarnet = async (req, res) => {
   try {
     if (!req.files || !req.files['collegeId']) {
+      console.log('❌ [uploadCarnet] collegeId file not found in request');
       return res.status(400).json({ msg: "❌ صورة الكارنيه مطلوبة" });
     }
     const carnetFile = req.files['collegeId'][0];
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (!allowedTypes.includes(carnetFile.mimetype)) {
+      console.log('❌ [uploadCarnet] Invalid file type:', carnetFile.mimetype);
       return res.status(400).json({ msg: "❌ نوع صورة الكارنيه غير مدعوم (فقط jpg, jpeg, png)" });
     }
     if (carnetFile.size > 2 * 1024 * 1024) {
+      console.log('❌ [uploadCarnet] File too large:', carnetFile.size);
       return res.status(400).json({ msg: "❌ حجم صورة الكارنيه يجب ألا يتجاوز 2 ميجابايت" });
     }
-    // يمكن إضافة فحص الأبعاد لاحقًا
     // تحديث بيانات المستخدم
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { collegeId: carnetFile.path, carnetStatus: 'pending' },
       { new: true }
     ).select('-password');
+    if (!user) {
+      console.log('❌ [uploadCarnet] User not found:', req.user._id);
+      return res.status(400).json({ msg: "❌ المستخدم غير موجود" });
+    }
     res.status(200).json({ msg: "✅ تم رفع الكارنيه بنجاح وجاري المراجعة", user });
   } catch (err) {
+    console.log('❌ [uploadCarnet] Unexpected error:', err.message);
     res.status(500).json({ msg: "❌ حدث خطأ أثناء رفع الكارنيه", error: err.message });
   }
 };

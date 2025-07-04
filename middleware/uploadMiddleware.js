@@ -25,6 +25,19 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+// إضافة فلاتر وحدود للملفات (حجم ونوع)
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
+  fileFilter: (req, file, cb) => {
+    console.log('🟢 [uploadMiddleware] field:', file.fieldname, '| mimetype:', file.mimetype);
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (file.fieldname === 'collegeId' && !allowedTypes.includes(file.mimetype)) {
+      console.log('🔴 [uploadMiddleware] نوع الملف غير مدعوم:', file.mimetype);
+      return cb(new Error('❌ نوع صورة الكارنيه غير مدعوم (فقط jpg, jpeg, png)'), false);
+    }
+    cb(null, true);
+  }
+});
 
 module.exports = upload;

@@ -132,11 +132,12 @@ exports.getInstructorsWithCourses = async (req, res) => {
   }
 };
 
-// حذف حساب المستخدم بنفسه
+// حذف حساب المستخدم بنفسه (مع لوج تشخيصي)
 exports.deleteMyAccount = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user._id || req.user.id;
     const userRole = req.user.role;
+    console.log('🟢 [deleteMyAccount] Request to delete account for:', userId, '| role:', userRole);
     // حذف الكورسات التي أنشأها المستخدم إذا كان معلم
     if (userRole === 'teacher') {
       await Course.deleteMany({ instructor: userId });
@@ -150,10 +151,13 @@ exports.deleteMyAccount = async (req, res) => {
     // حذف المستخدم نفسه
     const deleted = await User.findByIdAndDelete(userId);
     if (!deleted) {
+      console.log('🔴 [deleteMyAccount] User not found or already deleted:', userId);
       return res.status(404).json({ msg: "❌ المستخدم غير موجود أو تم حذفه بالفعل" });
     }
+    console.log('✅ [deleteMyAccount] Account deleted for:', userId);
     res.status(200).json({ msg: "✅ تم حذف الحساب وجميع البيانات المرتبطة بنجاح" });
   } catch (err) {
+    console.log('🔴 [deleteMyAccount] Error:', err.message);
     res.status(500).json({ msg: "❌ فشل في حذف الحساب", error: err.message });
   }
 };

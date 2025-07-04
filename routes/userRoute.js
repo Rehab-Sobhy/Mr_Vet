@@ -14,7 +14,11 @@ router.post('/register', userController.register);
 // ✅ تحديث بيانات مستخدم
 router.put('/:id', authMiddleware, userController.updateUser);
 
-// ✅ حذف مستخدم
+
+// ✅ حذف الحساب الذاتي (روت منفصل واضح)
+router.delete('/delete-account', authMiddleware, userController.deleteMyAccount);
+
+// ✅ حذف مستخدم (للأدمن فقط)
 router.delete('/:id', authMiddleware, roleMiddleware(['admin']), userController.deleteUser);
 
 // ✅ جلب كل أسماء المحاضرين

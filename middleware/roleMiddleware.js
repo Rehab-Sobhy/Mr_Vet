@@ -12,6 +12,7 @@ const roleMiddleware = (roles) => {
 
     // التحقق من صلاحيات المستخدم
     if (!roles.includes(req.user.role)) {
+      console.log(`🚫 [roleMiddleware] Access denied for user ${req.user.email} (role: ${req.user.role}) on path: ${req.originalUrl}`);
       return res.status(403).json({ message: '❌ Access Denied: ليس لديك الصلاحية للوصول إلى هذا المورد!' });
     }
 

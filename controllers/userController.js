@@ -120,8 +120,8 @@ exports.getInstructorsWithCourses = async (req, res) => {
 
     const results = await Promise.all(
       instructors.map(async (inst) => {
-        // جلب الكورسات بناءً على instructorName = اسم المعلم
-        const courses = await Course.find({ instructorName: inst.name }).select('-__v');
+        // جلب الكورسات بناءً على instructor = _id (الأفضل ربط الكورسات بالـ ObjectId)
+        const courses = await Course.find({ instructor: inst._id }).select('-__v');
         return { ...inst, courses };
       })
     );
@@ -140,7 +140,7 @@ exports.deleteMyAccount = async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ msg: "❌ المستخدم غير موجود أو تم حذفه بالفعل" });
     }
-    // يمكنك هنا حذف بيانات مرتبطة أخرى لو أردت (مثلاً كورسات، ملفات...)
+    // يمكن هنا حذف بيانات مرتبطة أخرى لو أردت (كورساته، ملفاته...)
     res.status(200).json({ msg: "✅ تم حذف الحساب بنجاح" });
   } catch (err) {
     res.status(500).json({ msg: "❌ فشل في حذف الحساب", error: err.message });

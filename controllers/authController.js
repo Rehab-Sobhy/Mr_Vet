@@ -91,8 +91,15 @@ exports.register = async (req, res) => {
       phone,
       academicYear,
       collegeId,
-      carnetStatus: 'pending', // الحالة الافتراضية للكارنيه
+      carnetStatus: role === 'student' ? 'pending' : 'accepted', // الطلاب معلقين، الباقي مفعل
     });
+
+    // الطلاب لا يحصلون على توكن إلا بعد التفعيل
+    if (role === 'student') {
+      return res.status(201).json({
+        msg: '✅ تم إنشاء الحساب بنجاح. يرجى رفع الكارنيه وانتظار الاعتماد من الإدارة.'
+      });
+    }
 
     // إنشاء التوكن
     const token = jwt.sign(
@@ -128,6 +135,13 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ msg: "❌ كلمة المرور غير صحيحة" });
+    }
+
+    // منع الطالب من الدخول إلا بعد التفعيل
+    if (user.role === 'student' && user.carnetStatus !== 'accepted') {
+      return res.status(403).json({
+        msg: '❌ حسابك لم يتم تفعيله بعد. يرجى انتظار موافقة الإدارة على الكارنيه.'
+      });
     }
 
     // إنشاء التوكن
@@ -278,7 +292,7 @@ exports.approveCarnet = async (req, res) => {
     }
     const user = await User.findByIdAndUpdate(
       userId,
-      { carnetStatus: 'approved' },
+      { carnetStatus: 'accepted' },
       { new: true }
     ).select('-password');
     if (!user) {
